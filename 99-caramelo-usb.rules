@@ -1,0 +1,50 @@
+# Regras udev para dispositivos USB do robô Caramelo
+# Criado em: 30 de Junho de 2025
+# 
+# Para aplicar as regras:
+# sudo cp 99-caramelo-usb.rules /etc/udev/rules.d/
+# sudo udevadm control --reload-rules
+# sudo udevadm trigger
+#
+# Mapeamento desejado:
+# USB0 -> ESP PWM
+# USB1 -> ESP Encoder  
+# USB2 -> LiDAR
+# USB3 -> Câmera ZED
+# USB5 -> Intel RealSense
+
+# ====== ESP PWM (USB0) ======
+# Silicon Labs CP210x - Serial: 0001 - DevPath: 1-2.1.1
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="0001", KERNELS=="1-2.1.1:1.0", SYMLINK+="ttyUSB0", MODE="0666", GROUP="dialout"
+
+# ====== ESP Encoder (USB1) ======
+# Silicon Labs CP210x - Serial: 0001 - DevPath: 1-2.1.2
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="0001", KERNELS=="1-2.1.2:1.0", SYMLINK+="ttyUSB1", MODE="0666", GROUP="dialout"
+
+# ====== LiDAR (USB2) ======
+# Silicon Labs CP210x - Serial: e4c7c3b7f189ec119c08c271d76262f7
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="e4c7c3b7f189ec119c08c271d76262f7", SYMLINK+="ttyUSB2", MODE="0666", GROUP="dialout"
+
+# ====== Câmera ZED (USB3) ======
+# STEREOLABS ZED 2i - Serial: OV0001
+SUBSYSTEM=="video4linux", ATTRS{idVendor}=="2b03", ATTRS{idProduct}=="f880", ATTRS{serial}=="OV0001", SYMLINK+="video_zed%n", MODE="0666", GROUP="video"
+# ZED HID Interface - Serial: 35894370  
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2b03", ATTRS{idProduct}=="f881", ATTRS{serial}=="35894370", SYMLINK+="hidraw_zed", MODE="0666", GROUP="input"
+# ZED Media Device
+SUBSYSTEM=="media", ATTRS{idVendor}=="2b03", ATTRS{idProduct}=="f880", ATTRS{serial}=="OV0001", SYMLINK+="media_zed", MODE="0666", GROUP="video"
+
+# ====== Intel RealSense (USB5) ======
+# Intel RealSense Depth Camera 455 - Serial: 337643060215
+SUBSYSTEM=="video4linux", ATTRS{idVendor}=="8086", ATTRS{idProduct}=="0b5c", ATTRS{serial}=="337643060215", SYMLINK+="video_realsense%n", MODE="0666", GROUP="video"
+# RealSense HID Interface
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="8086", ATTRS{idProduct}=="0b5c", ATTRS{serial}=="337643060215", SYMLINK+="hidraw_realsense", MODE="0666", GROUP="input"
+# RealSense Media Devices
+SUBSYSTEM=="media", ATTRS{idVendor}=="8086", ATTRS{idProduct}=="0b5c", ATTRS{serial}=="337643060215", SYMLINK+="media_realsense%n", MODE="0666", GROUP="video"
+# RealSense IIO Sensors
+SUBSYSTEM=="iio", ATTRS{idVendor}=="8086", ATTRS{idProduct}=="0b5c", ATTRS{serial}=="337643060215", SYMLINK+="iio_realsense%n", MODE="0666", GROUP="input"
+
+# ====== TODAS AS REGRAS FORAM CONFIGURADAS ======
+# Para aplicar as regras, execute:
+# sudo cp 99-caramelo-usb.rules /etc/udev/rules.d/
+# sudo udevadm control --reload-rules  
+# sudo udevadm trigger

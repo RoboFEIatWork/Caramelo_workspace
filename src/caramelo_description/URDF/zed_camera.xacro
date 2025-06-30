@@ -1,0 +1,260 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Propriedades da ZED 2i baseadas no padrão oficial -->
+  <xacro:property name="M_PI" value="3.1415926535897931"/>
+  <xacro:property name="zed2i_baseline" value="0.12"/>    <!-- Distância entre câmeras -->
+  <xacro:property name="zed2i_height" value="0.03"/>      <!-- Altura da ZED 2i -->
+  <xacro:property name="zed2i_bottom_slope" value="0.0"/>
+  <xacro:property name="zed2i_screw_offset_x" value="-0.01"/>
+  <xacro:property name="zed2i_screw_offset_z" value="0.0"/>
+  <xacro:property name="zed2i_optical_offset_x" value="-0.01"/>
+
+  <!-- Dimensões físicas para visualização -->
+  <xacro:property name="zed2i_width" value="0.175"/>     <!-- Largura -->
+  <xacro:property name="zed2i_depth" value="0.030"/>     <!-- Profundidade -->
+  <xacro:property name="zed2i_mass" value="0.159"/>      <!-- Massa em kg -->
+
+  <!-- Macro da câmera ZED 2i -->
+  <xacro:macro name="zed_camera" params="
+               prefix
+               parent
+               frame_id
+               xyz_offset:='0 0 0'
+               rpy_offset:='0 0 0'
+               mesh_xyz_offset:='0 0 0'
+               mesh_rpy_offset:='0 0 0'
+               is_ignition:=true">
+
+    <!-- Joint conectando ao link pai -->
+    <joint name="${prefix}${frame_id}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}${frame_id}_camera_link"/>
+      <origin xyz="${xyz_offset}" rpy="${rpy_offset}"/>
+    </joint>
+
+    <!-- Camera mounting point (ponto de montagem da câmera) -->
+    <link name="${prefix}${frame_id}_camera_link"/>
+    
+    <!-- Camera Center (centro da câmera) -->
+    <link name="${prefix}${frame_id}_camera_center">
+      <visual>
+        <origin xyz="${zed2i_screw_offset_x} 0 ${zed2i_screw_offset_z}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${zed2i_depth} ${zed2i_width} ${zed2i_height}"/>
+        </geometry>
+        <material name="zed2i_mat">
+          <color rgba="0.25 0.25 0.25 0.99"/>
+        </material>
+      </visual>
+      
+      <collision>
+        <origin xyz="${zed2i_screw_offset_x} 0 ${zed2i_screw_offset_z}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${zed2i_depth} ${zed2i_width} ${zed2i_height}"/>
+        </geometry>
+      </collision>
+      
+      <inertial>
+        <mass value="${zed2i_mass}"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.000239" ixy="0.0" ixz="0.0"
+                 iyy="0.000239" iyz="0.0"
+                 izz="0.000451"/>
+      </inertial>
+    </link>
+    
+    <joint name="${prefix}${frame_id}_camera_center_joint" type="fixed">
+      <parent link="${prefix}${frame_id}_camera_link"/>
+      <child link="${prefix}${frame_id}_camera_center"/>
+      <origin xyz="0 0 ${zed2i_height/2}" rpy="0 ${zed2i_bottom_slope} 0"/>
+    </joint>
+
+    <!-- Left Camera -->
+    <link name="${prefix}${frame_id}_left_camera_frame"/>
+    <joint name="${prefix}${frame_id}_left_camera_joint" type="fixed">
+      <parent link="${prefix}${frame_id}_camera_center"/>
+      <child link="${prefix}${frame_id}_left_camera_frame"/>
+      <origin xyz="${zed2i_optical_offset_x} ${zed2i_baseline/2} 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix}${frame_id}_left_camera_optical_frame"/>
+    <joint name="${prefix}${frame_id}_left_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-${M_PI/2} 0.0 -${M_PI/2}"/>
+      <parent link="${prefix}${frame_id}_left_camera_frame"/>
+      <child link="${prefix}${frame_id}_left_camera_optical_frame"/>
+    </joint>
+
+    <!-- Right Camera -->
+    <link name="${prefix}${frame_id}_right_camera_frame"/>
+    <joint name="${prefix}${frame_id}_right_camera_joint" type="fixed">
+      <parent link="${prefix}${frame_id}_camera_center"/>
+      <child link="${prefix}${frame_id}_right_camera_frame"/>
+      <origin xyz="${zed2i_optical_offset_x} -${zed2i_baseline/2} 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix}${frame_id}_right_camera_optical_frame"/>
+    <joint name="${prefix}${frame_id}_right_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-${M_PI/2} 0.0 -${M_PI/2}"/>
+      <parent link="${prefix}${frame_id}_right_camera_frame"/>
+      <child link="${prefix}${frame_id}_right_camera_optical_frame"/>
+    </joint>
+
+    <!-- IMU Link (integrado na ZED 2i) -->
+    <link name="${prefix}${frame_id}_imu_link"/>
+    <joint name="${prefix}${frame_id}_imu_joint" type="fixed">
+      <parent link="${prefix}${frame_id}_camera_center"/>
+      <child link="${prefix}${frame_id}_imu_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Plugin do Gazebo para a ZED (Ignition Gazebo) -->
+    <xacro:if value="${is_ignition}">
+      <gazebo reference="${prefix}${frame_id}_camera_center">
+        <!-- Plugin da câmera estéreo esquerda -->
+        <sensor name="zed_left_camera" type="camera">
+          <pose>${zed2i_optical_offset_x} ${zed2i_baseline/2} 0 0 0 0</pose>
+          <camera>
+            <horizontal_fov>1.919</horizontal_fov>
+            <image>
+              <width>1280</width>
+              <height>720</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.02</near>
+              <far>300</far>
+            </clip>
+            <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+            </noise>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <visualize>false</visualize>
+          <topic>zed/left/image_rect_color</topic>
+        </sensor>
+
+        <!-- Plugin da câmera estéreo direita -->
+        <sensor name="zed_right_camera" type="camera">
+          <pose>${zed2i_optical_offset_x} -${zed2i_baseline/2} 0 0 0 0</pose>
+          <camera>
+            <horizontal_fov>1.919</horizontal_fov>
+            <image>
+              <width>1280</width>
+              <height>720</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.02</near>
+              <far>300</far>
+            </clip>
+            <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.007</stddev>
+            </noise>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <visualize>false</visualize>
+          <topic>zed/right/image_rect_color</topic>
+        </sensor>
+
+        <!-- Plugin da câmera de profundidade -->
+        <sensor name="zed_depth_camera" type="depth_camera">
+          <pose>${zed2i_optical_offset_x} 0 0 0 0 0</pose>
+          <camera>
+            <horizontal_fov>1.919</horizontal_fov>
+            <image>
+              <width>1280</width>
+              <height>720</height>
+              <format>R_FLOAT32</format>
+            </image>
+            <clip>
+              <near>0.3</near>
+              <far>20.0</far>
+            </clip>
+            <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.1</stddev>
+            </noise>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <visualize>false</visualize>
+          <topic>zed/depth/depth_registered</topic>
+        </sensor>
+      </gazebo>
+
+      <!-- Plugin do IMU para Ignition Gazebo -->
+      <gazebo reference="${prefix}${frame_id}_imu_link">
+        <sensor name="imu_sensor" type="imu">
+          <always_on>1</always_on>
+          <update_rate>100</update_rate>
+          <visualize>true</visualize>
+          <topic>zed/imu/data</topic>
+          <imu>
+            <angular_velocity>
+              <x>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>2e-4</stddev>
+                  <bias_mean>0.0000075</bias_mean>
+                  <bias_stddev>0.0000008</bias_stddev>
+                </noise>
+              </x>
+              <y>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>2e-4</stddev>
+                  <bias_mean>0.0000075</bias_mean>
+                  <bias_stddev>0.0000008</bias_stddev>
+                </noise>
+              </y>
+              <z>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>2e-4</stddev>
+                  <bias_mean>0.0000075</bias_mean>
+                  <bias_stddev>0.0000008</bias_stddev>
+                </noise>
+              </z>
+            </angular_velocity>
+            <linear_acceleration>
+              <x>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>1.7e-2</stddev>
+                  <bias_mean>0.1</bias_mean>
+                  <bias_stddev>0.001</bias_stddev>
+                </noise>
+              </x>
+              <y>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>1.7e-2</stddev>
+                  <bias_mean>0.1</bias_mean>
+                  <bias_stddev>0.001</bias_stddev>
+                </noise>
+              </y>
+              <z>
+                <noise type="gaussian">
+                  <mean>0.0</mean>
+                  <stddev>1.7e-2</stddev>
+                  <bias_mean>0.1</bias_mean>
+                  <bias_stddev>0.001</bias_stddev>
+                </noise>
+              </z>
+            </linear_acceleration>
+          </imu>
+        </sensor>
+      </gazebo>
+    </xacro:if>
+
+  </xacro:macro>
+
+</robot>

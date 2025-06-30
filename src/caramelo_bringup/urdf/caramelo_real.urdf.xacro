@@ -15,6 +15,7 @@
   <xacro:include filename="$(find caramelo_description)/URDF/robot_base.xacro" />
   <xacro:include filename="$(find caramelo_description)/URDF/robot_mecanum_wheel.xacro" />
   <xacro:include filename="$(find caramelo_description)/URDF/lidar_sensor.xacro" />
+  <xacro:include filename="$(find caramelo_description)/URDF/zed_camera.xacro" />
 
   <!-- Base -->
   <xacro:robot_base 
@@ -51,10 +52,20 @@
     parent="base_link"
     frame_id="laser_frame"
     xyz_offset="0.292 0 0.077"
-    rpy_offset="0 0 ${-M_PI}"
+    rpy_offset="0 0 0"
     mesh_xyz_offset="0 0 0"
     mesh_rpy_offset="0 0 0"
     topic_name="scan"/>
+
+  <!-- ZED 2i Camera - Posicionada no centro especificado -->
+  <xacro:zed_camera
+    prefix="$(arg prefix)"
+    parent="base_link"
+    frame_id="zed_camera"
+    xyz_offset="0.293 0 0.115"
+    rpy_offset="0 0 0"
+    mesh_xyz_offset="0 0 0"
+    mesh_rpy_offset="0 0 0"/>
 
   <!-- =============================================== -->
   <!-- ROS 2 Control Configuration for REAL HARDWARE -->

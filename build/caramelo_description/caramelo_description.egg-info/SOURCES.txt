@@ -12,6 +12,8 @@ URDF/robot.urdf.xacro
 URDF/robot_base.xacro
 URDF/robot_mecanum_wheel.xacro
 URDF/robot_ros2_control.xacro
+URDF/zed_camera.xacro
+URDF/zed_camera_corrected.xacro
 caramelo_description/__init__.py
 launch/display.launch.py
 launch/gazebo.launch.py

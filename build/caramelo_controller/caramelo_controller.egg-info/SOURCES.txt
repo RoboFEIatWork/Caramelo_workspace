@@ -8,6 +8,12 @@ setup.py
 ../../build/caramelo_controller/caramelo_controller.egg-info/top_level.txt
 ../../build/caramelo_controller/caramelo_controller.egg-info/zip-safe
 caramelo_controller/__init__.py
+caramelo_controller.egg-info/PKG-INFO
+caramelo_controller.egg-info/SOURCES.txt
+caramelo_controller.egg-info/dependency_links.txt
+caramelo_controller.egg-info/requires.txt
+caramelo_controller.egg-info/top_level.txt
+caramelo_controller.egg-info/zip-safe
 config/robot_controllers.yaml
 launch/controler.launch.py
 launch/real_controller.launch.py
