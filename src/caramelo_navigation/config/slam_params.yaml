@@ -26,44 +26,44 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     transform_publish_period: 0.02 #if 0 never publishes odometry
-    map_update_interval: 5.0
-    resolution: 0.05
+    map_update_interval: 0.5  # MUITO MAIS RÁPIDO - Era 5.0, agora 0.5s
+    resolution: 0.02  # MELHOR ESCALA 1:1 - Era 0.05, agora 2cm por pixel
     max_laser_range: 20.0 #for rastering images
-    minimum_time_interval: 0.5
+    minimum_time_interval: 0.1  # MAIS RESPONSIVO - Era 0.5, agora 0.1s
     transform_timeout: 0.2
     tf_buffer_duration: 30.
     stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
     enable_interactive_mode: true
 
-    # General Parameters - OTIMIZADO PARA SCAN MATCHING
+    # General Parameters - CONFIANDO MAIS NA ODOMETRIA DOS ENCODERS
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.2              # Reduzido para mais correções
-    minimum_travel_heading: 0.2               # Reduzido para mais correções
-    scan_buffer_size: 15                      # Aumentado para melhor matching
-    scan_buffer_maximum_scan_distance: 15.0   # Aumentado alcance
-    link_match_minimum_response_fine: 0.05    # Mais sensível para matching
-    link_scan_maximum_distance: 2.0           # Aumentado para melhor correção
-    loop_search_maximum_distance: 4.0         # Melhor detecção de loops
+    minimum_travel_distance: 0.2   # MENOS SENSÍVEL - Voltar para ser mais conservador
+    minimum_travel_heading: 0.3    # MENOS SENSÍVEL - Não corrigir pequenas rotações
+    scan_buffer_size: 15            # BUFFER MENOR - Menos histórico para correção
+    scan_buffer_maximum_scan_distance: 15.0   
+    link_match_minimum_response_fine: 0.3     # MAIS RIGOROSO - Só corrigir se tiver certeza
+    link_scan_maximum_distance: 1.0           # MENOR DISTÂNCIA - Correções mais locais
+    loop_search_maximum_distance: 3.0         # MENOR BUSCA - Loops menos agressivos
     do_loop_closing: true 
-    loop_match_minimum_chain_size: 8          # Reduzido para loops menores
-    loop_match_maximum_variance_coarse: 2.0   # Mais rigoroso  
-    loop_match_minimum_response_coarse: 0.35    
-    loop_match_minimum_response_fine: 0.45
+    loop_match_minimum_chain_size: 12         # MAIOR CADEIA - Só loops bem definidos
+    loop_match_maximum_variance_coarse: 1.0   # MAIS RIGOROSO - Menos variância permitida
+    loop_match_minimum_response_coarse: 0.5   # MAIS RIGOROSO - Maior confiança necessária
+    loop_match_minimum_response_fine: 0.6     # MAIS RIGOROSO - Maior confiança necessária
 
-    # Correlation Parameters - Correlation Parameters
-    correlation_search_space_dimension: 0.5
-    correlation_search_space_resolution: 0.01
-    correlation_search_space_smear_deviation: 0.1 
+    # Correlation Parameters - CORREÇÕES MAIS CONSERVADORAS
+    correlation_search_space_dimension: 0.3  # MENOR ÁREA - Era 0.5, menos correção espacial
+    correlation_search_space_resolution: 0.01  # MENOS FINO - Era 0.005, voltar ao original
+    correlation_search_space_smear_deviation: 0.1  # MAIOR DESVIO - Era 0.05, mais tolerante 
 
     # Correlation Parameters - Loop Closure Parameters
     loop_search_space_dimension: 8.0
     loop_search_space_resolution: 0.05
     loop_search_space_smear_deviation: 0.03
 
-    # Scan Matcher Parameters
-    distance_variance_penalty: 0.5      
-    angle_variance_penalty: 1.0    
+    # Scan Matcher Parameters - PENALIDADES MAIORES PARA CORREÇÕES
+    distance_variance_penalty: 1.0      # MAIOR PENALIDADE - Era 0.5, mais conservador
+    angle_variance_penalty: 2.0         # MAIOR PENALIDADE - Era 1.0, mais conservador    
 
     fine_search_angle_offset: 0.00349     
     coarse_search_angle_offset: 0.349   

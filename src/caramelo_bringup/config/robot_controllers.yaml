@@ -24,10 +24,10 @@ mecanum_drive_controller:
    back_left_joint_name: back_left_wheel_joint
    back_right_joint_name: back_right_wheel_joint
 
-   # Robot physical parameters (Caramelo dimensions)
-   wheel_base: 0.47        # Distância entre eixos dianteiro/traseiro 
-   wheel_separation: 0.37  # Distância entre rodas esquerda/direita
-   wheel_radius: 0.05      # Raio da roda
+   # Robot physical parameters (Caramelo dimensions CORRIGIDAS)
+   wheel_base: 0.47        # Distância entre eixos dianteiro/traseiro (47cm)
+   wheel_separation: 0.31  # Distância entre rodas esquerda/direita (31cm)
+   wheel_radius: 0.05      # Raio da roda (5cm)
    wheel_separation_multiplier: 1.0
    front_left_wheel_radius_multiplier: 1.0
    front_right_wheel_radius_multiplier: 1.0

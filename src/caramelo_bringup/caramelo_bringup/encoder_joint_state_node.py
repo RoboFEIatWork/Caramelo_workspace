@@ -22,10 +22,10 @@ class EncoderJointStateNode(Node):
         # TF broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
         
-        # Parâmetros do robô
+        # Parâmetros do robô (MEDIDAS REAIS CORRIGIDAS)
         self.wheel_radius = 0.05  # metros
-        self.wheel_base = 0.47    # Distância entre eixos dianteiro/traseiro
-        self.wheel_separation = 0.315  # Distância entre rodas esquerda/direita (31,5 cm)
+        self.wheel_base = 0.47    # Distância entre eixos dianteiro/traseiro (47cm)
+        self.wheel_separation = 0.31  # Distância entre rodas esquerda/direita (31cm)
         
         # Parâmetros dos encoders
         self.pulses_per_rev = 114688  # Pulsos por revolução do motor corrigido
@@ -223,16 +223,22 @@ class EncoderJointStateNode(Node):
                 # Velocidade linear da roda usando a distância real por pulso (m/s)
                 wheel_velocities.append(delta_counts * self.meters_per_pulse / dt)
             
-            # Cinemática inversa para mecanum drive
+            # Cinemática inversa CORRIGIDA para mecanum drive
+            # Fórmulas padrão para mecanum drive (wheel_velocities em m/s)
             # v_x = (v_fl + v_fr + v_rl + v_rr) / 4
             # v_y = (-v_fl + v_fr + v_rl - v_rr) / 4  
-            # w_z = (-v_fl + v_fr - v_rl + v_rr) / (4 * (wheel_base/2 + wheel_separation/2))
+            # w_z = (-v_fl + v_fr - v_rl + v_rr) / (4 * L)
+            # onde L = distância do centro até a roda
             
             v_x = (wheel_velocities[0] + wheel_velocities[1] + wheel_velocities[2] + wheel_velocities[3]) / 4.0
             v_y = (-wheel_velocities[0] + wheel_velocities[1] + wheel_velocities[2] - wheel_velocities[3]) / 4.0
             
-            # Distância do centro às rodas (para cálculo da velocidade angular)
-            l = (self.wheel_base + self.wheel_separation) / 2.0
+            # CORREÇÃO: Usar a distância correta do centro até as rodas
+            # L = sqrt((wheel_base/2)² + (wheel_separation/2)²)
+            l_x = self.wheel_base / 2.0      # 47cm/2 = 23.5cm
+            l_y = self.wheel_separation / 2.0  # 31cm/2 = 15.5cm
+            l = math.sqrt(l_x*l_x + l_y*l_y)   # Distância real do centro às rodas
+            
             w_z = (-wheel_velocities[0] + wheel_velocities[1] - wheel_velocities[2] + wheel_velocities[3]) / (4.0 * l)
             
             # Integração da odometria
