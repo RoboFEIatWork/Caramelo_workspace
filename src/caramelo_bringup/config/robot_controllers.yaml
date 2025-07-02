@@ -51,7 +51,7 @@ mecanum_drive_controller:
    cmd_vel_timeout: 2.0
    publish_limited_velocity: false
    velocity_rolling_window_size: 10
-   publish_rate: 50.0
+   publish_rate: 100.0  # OTIMIZADO: 100Hz para sincronizar com update_rate
 
    # Velocity limits (ajustados para o Caramelo)
    linear.x.has_velocity_limits: true

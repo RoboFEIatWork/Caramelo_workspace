@@ -1,10 +1,12 @@
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import Float64MultiArray
-from sensor_msgs.msg import JointState
-import serial
 import json
 import time
+
+import rclpy
+import serial
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Float64MultiArray
+
 
 class CarameloHWInterfaceNode(Node):
     def __init__(self):
@@ -55,6 +57,12 @@ class CarameloHWInterfaceNode(Node):
         
         # Timer para display estático (a cada 0.5 segundos)
         self.create_timer(0.5, self.display_static_info)
+        
+        # Timer para logs de alta frequência (10Hz para depuração)
+        self.create_timer(0.1, self.log_high_frequency_data)
+        
+        # Contador para logs detalhados
+        self.log_counter = 0
         
         self.get_logger().info('⚡ CARAMELO PWM INTERFACE - Iniciando...')
         self.get_logger().info('Hardware Interface para ESP32 PWM iniciado!')
@@ -166,7 +174,7 @@ class CarameloHWInterfaceNode(Node):
         """Display estático com limpeza de tela - valores atualizados no mesmo local"""
         import os
         import sys
-        
+
         # Método mais robusto para limpar tela
         if os.name == 'nt':  # Windows
             os.system('cls')
@@ -308,6 +316,21 @@ class CarameloHWInterfaceNode(Node):
         js.velocity = self.sim_velocity
         js.effort = [0.0, 0.0, 0.0, 0.0]
         self.joint_state_pub.publish(js)
+
+    def log_high_frequency_data(self):
+        """Logs detalhados para alta frequência de depuração"""
+        self.log_counter += 1
+        
+        # Log a cada 50 ciclos (5 segundos em 10Hz)
+        if self.log_counter % 50 == 0:
+            self.get_logger().info(f'⚡ PWM LOG #{self.log_counter//50}:')
+            self.get_logger().info(f'   Velocidades: FL={self.last_wheel_velocities[0]:.2f}, FR={self.last_wheel_velocities[1]:.2f}, RL={self.last_wheel_velocities[2]:.2f}, RR={self.last_wheel_velocities[3]:.2f} rad/s')
+            self.get_logger().info(f'   PWM Values: FL={self.last_pwm_values[0]}, FR={self.last_pwm_values[1]}, RL={self.last_pwm_values[2]}, RR={self.last_pwm_values[3]}')
+            self.get_logger().info(f'   Cmd_vel: linear_x={self.last_cmd_vel["linear_x"]:.2f}, linear_y={self.last_cmd_vel["linear_y"]:.2f}, angular_z={self.last_cmd_vel["angular_z"]:.2f}')
+            if self.connection_established:
+                self.get_logger().info(f'   Status: ESP32 PWM CONECTADA ({self.serial_port.port})')
+            else:
+                self.get_logger().warn(f'   Status: ESP32 PWM DESCONECTADA')
 
     def __del__(self):
         """Fechar conexão serial ao finalizar"""

@@ -1,13 +1,15 @@
+import json
+import math
+import time
+
 import rclpy
+import serial
+import tf2_ros
+from geometry_msgs.msg import TransformStamped, Twist
+from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TransformStamped, Twist
-import tf2_ros
-import serial
-import json
-import time
-import math
+
 
 class EncoderJointStateNode(Node):
     def __init__(self):
@@ -57,6 +59,12 @@ class EncoderJointStateNode(Node):
         # Timer para display estático (a cada 0.1 segundos = 10Hz)
         self.create_timer(0.1, self.display_static_info)
         
+        # Timer para logs de alta frequência (10Hz para depuração)
+        self.create_timer(0.1, self.log_high_frequency_data)
+        
+        # Contador para logs detalhados
+        self.log_counter = 0
+        
         self.get_logger().info('🔄 CARAMELO ENCODERS - Iniciando...')
         self.get_logger().info('Nó de encoders e odometria iniciado!')
         self.get_logger().info(f'Parâmetros: wheel_radius={self.wheel_radius}m, wheel_base={self.wheel_base}m, wheel_separation={self.wheel_separation}m')
@@ -103,7 +111,7 @@ class EncoderJointStateNode(Node):
         """Display estático com limpeza de tela - valores atualizados no mesmo local"""
         import os
         import sys
-        
+
         # Método mais robusto para limpar tela
         if os.name == 'nt':  # Windows
             os.system('cls')
@@ -333,6 +341,21 @@ class EncoderJointStateNode(Node):
         tf.transform.rotation.w = math.cos(self.theta / 2.0)
         
         self.tf_broadcaster.sendTransform(tf)
+
+    def log_high_frequency_data(self):
+        """Logs detalhados para alta frequência de depuração"""
+        self.log_counter += 1
+        
+        # Log a cada 50 ciclos (5 segundos em 10Hz)
+        if self.log_counter % 50 == 0:
+            self.get_logger().info(f'🔄 ENCODER LOG #{self.log_counter//50}:')
+            self.get_logger().info(f'   Posição: X={self.x:.3f}m, Y={self.y:.3f}m, θ={math.degrees(self.theta):.1f}°')
+            self.get_logger().info(f'   Velocidades: FL={self.velocity[0]:.2f}, FR={self.velocity[1]:.2f}, RL={self.velocity[2]:.2f}, RR={self.velocity[3]:.2f} rad/s')
+            self.get_logger().info(f'   Contadores: FL={self.last_counts[0]}, FR={self.last_counts[1]}, RL={self.last_counts[2]}, RR={self.last_counts[3]}')
+            if self.connection_established:
+                self.get_logger().info(f'   Status: ESP32 CONECTADA ({self.serial_port.port})')
+            else:
+                self.get_logger().warn(f'   Status: ESP32 DESCONECTADA')
 
     def __del__(self):
         """Fechar conexão serial ao finalizar"""

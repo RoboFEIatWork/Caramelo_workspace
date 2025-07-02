@@ -6,7 +6,6 @@
 /home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/launch/gazebo.launch.py
 /home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/rviz/display.rviz
 /home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/rviz/caramelo.rviz
-/home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/URDF/zed_camera_corrected.xacro
 /home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/URDF/lidar_sensor.xacro
 /home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/URDF/robot.urdf.xacro
 /home/work/Caramelo_workspace/install/caramelo_description/share/caramelo_description/URDF/robot_ros2_control.xacro
