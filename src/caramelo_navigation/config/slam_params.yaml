@@ -15,55 +15,63 @@ slam_toolbox:
     base_frame: base_footprint
     scan_topic: /scan
     mode: mapping #localization
-
-    # if you'd like to immediately start continuing a map at a given pose
-    # or at the dock, but they are mutually exclusive, if pose is given
-    # will use pose
-    #map_file_name: test_steve
-    #map_start_pose: [0.0, 0.0, 0.0]
-    #map_start_at_dock: true
-
+    
+    # CONFIGURAÇÃO HÍBRIDA: Scan matching moderado para alinhamento de paredes
+    # mas SEM correção drástica da odometria
+    publish_odom_tf: false  # Encoder publica TF odom->base_footprint
+    publish_scan_match_odom: false  # NÃO sobrescrever odometria dos encoders
+    
     debug_logging: false
     throttle_scans: 1
-    transform_publish_period: 0.02 #if 0 never publishes odometry
-    map_update_interval: 0.5  # MUITO MAIS RÁPIDO - Era 5.0, agora 0.5s
-    resolution: 0.02  # MELHOR ESCALA 1:1 - Era 0.05, agora 2cm por pixel
-    max_laser_range: 20.0 #for rastering images
-    minimum_time_interval: 0.1  # MAIS RESPONSIVO - Era 0.5, agora 0.1s
+    transform_publish_period: 0.02  # 50Hz para map->odom transform
+    map_update_interval: 0.3        # 3.3Hz - moderado para mapa limpo
+    resolution: 0.02                # 2cm por pixel - boa resolução
+    max_laser_range: 20.0
+    minimum_time_interval: 0.1      # Tempo mínimo entre correções
     transform_timeout: 0.2
     tf_buffer_duration: 30.
-    stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
+    stack_size_to_use: 40000000
+    enable_interactive_mode: true
+    throttle_scans: 1
+    transform_publish_period: 0.02  # Taxa normal - 50Hz
+    map_update_interval: 1.0        # MAIS LENTO - Era 0.2, agora 1Hz para mapa mais estável
+    resolution: 0.02                # RESOLUÇÃO NORMAL - Era 0.015, agora 2cm por pixel
+    max_laser_range: 20.0
+    minimum_time_interval: 0.2      # MENOS RESPONSIVO - Era 0.05, agora 0.2s para mais estabilidade
+    transform_timeout: 0.2          # Normal
+    tf_buffer_duration: 30.
+    stack_size_to_use: 40000000
     enable_interactive_mode: true
 
-    # General Parameters - CONFIANDO MAIS NA ODOMETRIA DOS ENCODERS
+    # General Parameters - SCAN MATCHING APENAS PARA ALINHAMENTO DE PAREDES
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.2   # MENOS SENSÍVEL - Voltar para ser mais conservador
-    minimum_travel_heading: 0.3    # MENOS SENSÍVEL - Não corrigir pequenas rotações
-    scan_buffer_size: 15            # BUFFER MENOR - Menos histórico para correção
+    minimum_travel_distance: 0.4    # CORREÇÕES A CADA 40cm
+    minimum_travel_heading: 0.4     # CORREÇÕES ANGULARES A CADA ~23°
+    scan_buffer_size: 8             # BUFFER PEQUENO
     scan_buffer_maximum_scan_distance: 15.0   
-    link_match_minimum_response_fine: 0.3     # MAIS RIGOROSO - Só corrigir se tiver certeza
-    link_scan_maximum_distance: 1.0           # MENOR DISTÂNCIA - Correções mais locais
-    loop_search_maximum_distance: 3.0         # MENOR BUSCA - Loops menos agressivos
-    do_loop_closing: true 
-    loop_match_minimum_chain_size: 12         # MAIOR CADEIA - Só loops bem definidos
-    loop_match_maximum_variance_coarse: 1.0   # MAIS RIGOROSO - Menos variância permitida
-    loop_match_minimum_response_coarse: 0.5   # MAIS RIGOROSO - Maior confiança necessária
-    loop_match_minimum_response_fine: 0.6     # MAIS RIGOROSO - Maior confiança necessária
+    link_match_minimum_response_fine: 0.5     # MUITO RIGOROSO - só alinhamentos óbvios
+    link_scan_maximum_distance: 0.6           # CORREÇÕES MICRO-LOCAIS
+    loop_search_maximum_distance: 1.5         # LOOPS MUITO CONSERVADORES
+    do_loop_closing: false                    # SEM LOOP CLOSING - evita saltos
+    loop_match_minimum_chain_size: 20         # Não usado (loop closing off)
+    loop_match_maximum_variance_coarse: 0.6   # Não usado
+    loop_match_minimum_response_coarse: 0.8   # Não usado
+    loop_match_minimum_response_fine: 0.8     # Não usado
 
-    # Correlation Parameters - CORREÇÕES MAIS CONSERVADORAS
-    correlation_search_space_dimension: 0.3  # MENOR ÁREA - Era 0.5, menos correção espacial
-    correlation_search_space_resolution: 0.01  # MENOS FINO - Era 0.005, voltar ao original
-    correlation_search_space_smear_deviation: 0.1  # MAIOR DESVIO - Era 0.05, mais tolerante 
+    # Correlation Parameters - CORREÇÕES MUITO CONSERVADORAS
+    correlation_search_space_dimension: 0.2  # MENOR ÁREA - Era 0.4, correções muito locais
+    correlation_search_space_resolution: 0.02  # MENOS FINO - Era 0.008, menos precisão mas mais estável
+    correlation_search_space_smear_deviation: 0.15  # MAIOR DESVIO - Era 0.08, mais tolerante 
 
     # Correlation Parameters - Loop Closure Parameters
     loop_search_space_dimension: 8.0
     loop_search_space_resolution: 0.05
     loop_search_space_smear_deviation: 0.03
 
-    # Scan Matcher Parameters - PENALIDADES MAIORES PARA CORREÇÕES
-    distance_variance_penalty: 1.0      # MAIOR PENALIDADE - Era 0.5, mais conservador
-    angle_variance_penalty: 2.0         # MAIOR PENALIDADE - Era 1.0, mais conservador    
+    # Scan Matcher Parameters - PENALIDADES ALTAS PARA MAPA LIMPO
+    distance_variance_penalty: 1.5      # ALTA PENALIDADE - Era 0.7, muito conservador
+    angle_variance_penalty: 2.5         # ALTA PENALIDADE - Era 1.5, muito conservador    
 
     fine_search_angle_offset: 0.00349     
     coarse_search_angle_offset: 0.349   

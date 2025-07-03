@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
@@ -8,7 +10,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from ament_index_python.packages import get_package_share_directory
+
 
 def generate_launch_description():
     
@@ -52,7 +54,12 @@ def generate_launch_description():
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        output='screen')
+        output='screen',
+        remappings=[
+            # Remapear para que o EKF possa usar a odometria corrigida
+            ('scan_match_odom', '/slam_toolbox/odometry')
+        ]
+    )
 
     # Nó do Lifecycle Manager
     start_lifecycle_manager_cmd = Node(

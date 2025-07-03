@@ -22,14 +22,29 @@ class EncoderJointStateNode(Node):
         # TF broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
         
-        # Parâmetros do robô (MEDIDAS REAIS CORRIGIDAS)
-        self.wheel_radius = 0.05  # metros
-        self.wheel_base = 0.47    # Distância entre eixos dianteiro/traseiro (47cm)
-        self.wheel_separation = 0.31  # Distância entre rodas esquerda/direita (31cm)
+        # Declarar parâmetros com valores padrão
+        self.declare_parameter('wheel_radius', 0.05)
+        self.declare_parameter('wheel_base', 0.47)
+        self.declare_parameter('wheel_separation', 0.31)
+        self.declare_parameter('encoder_pulses_per_revolution', 57344)
+        self.declare_parameter('gear_ratio', 28.0)
+        self.declare_parameter('serial_port', '/dev/ttyUSB1')
+        self.declare_parameter('serial_baudrate', 115200)
+        self.declare_parameter('update_frequency', 50.0)
+        
+        # Parâmetros do robô
+        self.wheel_radius = self.get_parameter('wheel_radius').get_parameter_value().double_value
+        self.wheel_base = self.get_parameter('wheel_base').get_parameter_value().double_value
+        self.wheel_separation = self.get_parameter('wheel_separation').get_parameter_value().double_value
         
         # Parâmetros dos encoders
-        self.pulses_per_rev = 114688  # Pulsos por revolução do motor corrigido
-        self.meters_per_pulse = (2 * math.pi * self.wheel_radius) / self.pulses_per_rev  # Distância linear por pulso (metros)
+        self.encoder_pulses_per_rev = self.get_parameter('encoder_pulses_per_revolution').get_parameter_value().integer_value
+        self.gear_ratio = self.get_parameter('gear_ratio').get_parameter_value().double_value
+        
+        # Cálculos corretos baseados nas especificações:
+        # - 1 volta da roda = 57344 pulsos do encoder (direto da roda, já considerando gear box)
+        self.pulses_per_rev = self.encoder_pulses_per_rev
+        self.meters_per_pulse = (2 * math.pi * self.wheel_radius) / self.pulses_per_rev
         
         # Estado dos joints (nomes correspondentes ao URDF)
         self.joint_names = [
@@ -51,41 +66,41 @@ class EncoderJointStateNode(Node):
         self.counts_initialized = False
         
         # Configuração da serial com tentativas de reconexão
+        self.serial_port_name = self.get_parameter('serial_port').get_parameter_value().string_value
+        self.serial_baudrate = self.get_parameter('serial_baudrate').get_parameter_value().integer_value
         self.setup_serial_connection()
         
-        # Timer para leitura (50Hz)
-        self.timer = self.create_timer(0.02, self.read_and_publish)
+        # Timer para leitura baseado na frequência configurada
+        update_freq = self.get_parameter('update_frequency').get_parameter_value().double_value
+        self.timer = self.create_timer(1.0/update_freq, self.read_and_publish)
         
         # Timer para display estático (a cada 0.1 segundos = 10Hz)
         self.create_timer(0.1, self.display_static_info)
         
-        # Timer para logs de alta frequência (10Hz para depuração)
-        self.create_timer(0.1, self.log_high_frequency_data)
-        
-        # Contador para logs detalhados
-        self.log_counter = 0
-        
         self.get_logger().info('🔄 CARAMELO ENCODERS - Iniciando...')
         self.get_logger().info('Nó de encoders e odometria iniciado!')
-        self.get_logger().info(f'Parâmetros: wheel_radius={self.wheel_radius}m, wheel_base={self.wheel_base}m, wheel_separation={self.wheel_separation}m')
-        self.get_logger().info(f'Pulsos por revolução: {self.pulses_per_rev}')
-        self.get_logger().info(f'Distância por pulso: {self.meters_per_pulse:.9f}m (calculado: 2π×{self.wheel_radius}m / {self.pulses_per_rev})')
+        self.get_logger().info(f'Parâmetros físicos:')
+        self.get_logger().info(f'  - Raio das rodas: {self.wheel_radius}m')
+        self.get_logger().info(f'  - Distância entre eixos: {self.wheel_base}m')
+        self.get_logger().info(f'  - Distância entre rodas: {self.wheel_separation}m')
+        self.get_logger().info(f'Parâmetros dos encoders:')
+        self.get_logger().info(f'  - Pulsos por revolução da roda: {self.pulses_per_rev}')
+        self.get_logger().info(f'  - Gear ratio (motor:roda): {self.gear_ratio}:1')
+        self.get_logger().info(f'  - Distância por pulso: {self.meters_per_pulse:.9f}m')
+        self.get_logger().info(f'  - Circunferência da roda: {2*math.pi*self.wheel_radius:.6f}m')
         self.get_logger().info('Display estático será iniciado...')
 
     def setup_serial_connection(self):
         """Configura conexão serial com a ESP32 dos encoders"""
-        # Porta exclusiva para encoders: USB1
-        encoder_port = '/dev/ttyUSB1'
-        
         try:
             # Fechar qualquer conexão anterior
             if hasattr(self, 'serial_port') and self.serial_port.is_open:
                 self.serial_port.close()
                 time.sleep(0.5)
             
-            # Conectar exclusivamente na porta USB1 para encoders
-            self.serial_port = serial.Serial(encoder_port, baudrate=115200, timeout=0.1)
-            self.get_logger().info(f"📊 ESP32 dos encoders conectada em {encoder_port}")
+            # Conectar na porta configurada
+            self.serial_port = serial.Serial(self.serial_port_name, baudrate=self.serial_baudrate, timeout=0.1)
+            self.get_logger().info(f"📊 ESP32 dos encoders conectada em {self.serial_port_name}")
             
             # Hard Reset da ESP32 para limpar memória
             self.get_logger().info("🔄 Fazendo hard reset da ESP32 dos encoders...")
@@ -102,9 +117,9 @@ class EncoderJointStateNode(Node):
             self.connection_established = True
             
         except Exception as e:
-            self.get_logger().error(f"❌ Falha ao conectar ESP32 dos encoders em {encoder_port}: {e}")
-            self.get_logger().warn("🔍 Verifique se a ESP32 dos encoders está conectada em /dev/ttyUSB1")
-            self.get_logger().warn("🔍 Verifique as permissões: sudo chmod 777 /dev/ttyUSB1")
+            self.get_logger().error(f"❌ Falha ao conectar ESP32 dos encoders em {self.serial_port_name}: {e}")
+            self.get_logger().warn(f"🔍 Verifique se a ESP32 dos encoders está conectada em {self.serial_port_name}")
+            self.get_logger().warn(f"🔍 Verifique as permissões: sudo chmod 777 {self.serial_port_name}")
             self.connection_established = False
 
     def display_static_info(self):
@@ -223,22 +238,16 @@ class EncoderJointStateNode(Node):
                 # Velocidade linear da roda usando a distância real por pulso (m/s)
                 wheel_velocities.append(delta_counts * self.meters_per_pulse / dt)
             
-            # Cinemática inversa CORRIGIDA para mecanum drive
-            # Fórmulas padrão para mecanum drive (wheel_velocities em m/s)
+            # Cinemática inversa para mecanum drive
             # v_x = (v_fl + v_fr + v_rl + v_rr) / 4
             # v_y = (-v_fl + v_fr + v_rl - v_rr) / 4  
-            # w_z = (-v_fl + v_fr - v_rl + v_rr) / (4 * L)
-            # onde L = distância do centro até a roda
+            # w_z = (-v_fl + v_fr - v_rl + v_rr) / (4 * (wheel_base/2 + wheel_separation/2))
             
             v_x = (wheel_velocities[0] + wheel_velocities[1] + wheel_velocities[2] + wheel_velocities[3]) / 4.0
             v_y = (-wheel_velocities[0] + wheel_velocities[1] + wheel_velocities[2] - wheel_velocities[3]) / 4.0
             
-            # CORREÇÃO: Usar a distância correta do centro até as rodas
-            # L = sqrt((wheel_base/2)² + (wheel_separation/2)²)
-            l_x = self.wheel_base / 2.0      # 47cm/2 = 23.5cm
-            l_y = self.wheel_separation / 2.0  # 31cm/2 = 15.5cm
-            l = math.sqrt(l_x*l_x + l_y*l_y)   # Distância real do centro às rodas
-            
+            # Distância do centro às rodas (para cálculo da velocidade angular)
+            l = (self.wheel_base + self.wheel_separation) / 2.0
             w_z = (-wheel_velocities[0] + wheel_velocities[1] - wheel_velocities[2] + wheel_velocities[3]) / (4.0 * l)
             
             # Integração da odometria
@@ -347,21 +356,6 @@ class EncoderJointStateNode(Node):
         tf.transform.rotation.w = math.cos(self.theta / 2.0)
         
         self.tf_broadcaster.sendTransform(tf)
-
-    def log_high_frequency_data(self):
-        """Logs detalhados para alta frequência de depuração"""
-        self.log_counter += 1
-        
-        # Log a cada 50 ciclos (5 segundos em 10Hz)
-        if self.log_counter % 50 == 0:
-            self.get_logger().info(f'🔄 ENCODER LOG #{self.log_counter//50}:')
-            self.get_logger().info(f'   Posição: X={self.x:.3f}m, Y={self.y:.3f}m, θ={math.degrees(self.theta):.1f}°')
-            self.get_logger().info(f'   Velocidades: FL={self.velocity[0]:.2f}, FR={self.velocity[1]:.2f}, RL={self.velocity[2]:.2f}, RR={self.velocity[3]:.2f} rad/s')
-            self.get_logger().info(f'   Contadores: FL={self.last_counts[0]}, FR={self.last_counts[1]}, RL={self.last_counts[2]}, RR={self.last_counts[3]}')
-            if self.connection_established:
-                self.get_logger().info(f'   Status: ESP32 CONECTADA ({self.serial_port.port})')
-            else:
-                self.get_logger().warn(f'   Status: ESP32 DESCONECTADA')
 
     def __del__(self):
         """Fechar conexão serial ao finalizar"""

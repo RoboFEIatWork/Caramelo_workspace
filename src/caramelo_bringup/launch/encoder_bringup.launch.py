@@ -66,13 +66,30 @@ def generate_launch_description():
     # ===============================================
     # 4. Encoder Node (Odometria real)
     # ===============================================
+    # Parâmetros físicos do robô Caramelo:
+    # - Distância entre centros das rodas esquerda/direita: 31 cm
+    # - Distância entre eixos (frente/trás): 47 cm  
+    # - Diâmetro das rodas: 10 cm (raio 5 cm)
+    # - Gear box: 1 volta da roda = 28 voltas do motor
+    # - Encoder: 1 volta da roda = 57344 pulsos do encoder
+    
+    encoder_config = PathJoinSubstitution([
+        caramelo_bringup_path,
+        "config",
+        "encoder_config.yaml"
+    ])
+    
     encoder_node = Node(
         package='caramelo_bringup',
         executable='encoder_joint_state_node',
         name='encoder_joint_state_node',
         output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-        respawn=True
+        parameters=[
+            encoder_config,
+            {'use_sim_time': use_sim_time}
+        ],
+        respawn=True,
+        respawn_delay=2.0
     )
     
     return LaunchDescription([

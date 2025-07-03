@@ -2,11 +2,11 @@ ekf_filter_node:
   ros__parameters:
     # Configuração EKF para fusão de odometria encoder + scan matching
     
-    # Frequência do filtro (Hz)
-    frequency: 30.0
+    # Frequência do filtro (Hz) - MAIS ALTA para correções rápidas
+    frequency: 50.0
     
-    # Sensor timeout (sec)
-    sensor_timeout: 0.1
+    # Sensor timeout (sec) - MAIS TOLERANTE para permitir dados do SLAM
+    sensor_timeout: 0.2
     
     # Usar dados de dois sensores: encoder odometry + visual odometry (do SLAM)
     two_d_mode: true
@@ -48,13 +48,26 @@ ekf_filter_node:
                              0,    0,    0,    0,    0,    1e-3]
     
     # === ODOMETRIA CORRIGIDA (do SLAM/scan matching) ===
-    # Será conectada quando scan matching estiver disponível
-    # odom1: /odometry/filtered_scan
-    # odom1_config: [true,  true,  false,     # x, y, z (posição corrigida)
-    #                false, false, true,      # roll, pitch, yaw (orientação corrigida)
-    #                false, false, false,     # velocidades (usar apenas do encoder)
-    #                false, false, false,     # velocidades angulares
-    #                false, false, false]     # acelerações
+    # Conecta com a odometria corrigida pelo SLAM Toolbox
+    odom1: /slam_toolbox/odometry
+    odom1_config: [true,  true,  false,     # x, y, z (posição corrigida - CONFIA MAIS)
+                   false, false, true,      # roll, pitch, yaw (orientação corrigida)
+                   false, false, false,     # velocidades (usar apenas do encoder)
+                   false, false, false,     # velocidades angulares (usar apenas do encoder)
+                   false, false, false]     # acelerações
+                   
+    odom1_queue_size: 5
+    odom1_nodelay: true
+    odom1_differential: false
+    odom1_relative: false
+    
+    # Matriz de covariância para odometria do SLAM (MAIS CONFIÁVEL que encoders)
+    odom1_pose_covariance: [1e-4, 0,    0,    0,    0,    0,
+                            0,    1e-4, 0,    0,    0,    0,
+                            0,    0,    1e6,  0,    0,    0,
+                            0,    0,    0,    1e6,  0,    0,
+                            0,    0,    0,    0,    1e6,  0,
+                            0,    0,    0,    0,    0,    1e-4]
     
     # Configurações do processo
     process_noise_covariance: [0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,

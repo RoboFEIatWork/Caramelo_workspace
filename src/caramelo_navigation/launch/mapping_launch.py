@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
+
 
 def generate_launch_description():
     """
@@ -42,7 +44,7 @@ def generate_launch_description():
         default_value='false',
         description='Usar tempo de simulação')
 
-    # LIDAR (rplidar oficial)
+    # LIDAR (rplidar oficial) - publica em /scan
     start_lidar_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rplidar_ros'),
@@ -58,22 +60,35 @@ def generate_launch_description():
         }.items()
     )
 
-    # Robot Localization EKF para fusão de sensores
-    start_ekf_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory(package_name),
-                         'launch', 'ekf_launch.py'))
+    # Filtro LIDAR - remove pontos da carcaça e ruído
+    lidar_filter_node = Node(
+        package='caramelo_navigation',
+        executable='lidar_filter',
+        name='lidar_filter',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+        remappings=[
+            ('/scan_raw', '/scan'),  # Recebe scan bruto do LIDAR
+            ('/scan', '/scan_filtered')  # Publica scan filtrado
+        ]
     )
 
-    # Nó conversor Twist → TwistStamped (para compatibilidade com mecanum drive)
-    twist_converter_node = Node(
-        package='caramelo_bringup',
-        executable='twist_converter_node',
-        name='twist_converter',
-        output='screen'
-    )
+    # Robot Localization EKF - DESABILITADO para mapeamento mais limpo
+    # start_ekf_cmd = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(get_package_share_directory(package_name),
+    # Robot Localization EKF - DESABILITADO para mapeamento mais limpo
+    # start_ekf_cmd = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(get_package_share_directory(package_name),
+    #                      'launch', 'ekf_launch.py'))
+    # )
 
-    # SLAM Toolbox
+    # NOTA: twist_converter_node foi removido daqui pois já está incluído
+    # no teleop_keyboard.launch.py que é chamado pelo teleop_mapping.launch.py
+    # Evita conflito de nós com mesmo nome rodando simultaneamente
+
+    # SLAM Toolbox - USA scan filtrado
     start_slam_toolbox_node = Node(
         parameters=[
             slam_params_file,
@@ -82,7 +97,11 @@ def generate_launch_description():
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        output='screen'
+        output='screen',
+        remappings=[
+            ('/scan', '/scan_filtered')  # Usa scan filtrado para mapeamento
+        ]
+        # Removido remapping de odometria - usar dos encoders diretamente
     )
 
     # Lifecycle Manager para SLAM
@@ -115,9 +134,10 @@ def generate_launch_description():
 
     # Adiciona ações
     ld.add_action(start_lidar_cmd)           # LIDAR
-    ld.add_action(start_ekf_cmd)            # EKF
-    ld.add_action(twist_converter_node)      # Conversor de comandos
-    ld.add_action(start_slam_toolbox_node)   # SLAM
+    ld.add_action(lidar_filter_node)         # Filtro LIDAR (remove carcaça)
+    # ld.add_action(start_ekf_cmd)            # EKF - DESABILITADO
+    # twist_converter incluído no teleop_keyboard.launch (via teleop_mapping)
+    ld.add_action(start_slam_toolbox_node)   # SLAM (usa scan filtrado)
     ld.add_action(start_lifecycle_manager_cmd) # Lifecycle manager
     ld.add_action(start_rviz_cmd)            # RViz
 
