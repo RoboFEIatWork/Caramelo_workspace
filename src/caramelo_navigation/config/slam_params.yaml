@@ -23,22 +23,18 @@ slam_toolbox:
     
     debug_logging: false
     
-    # === CONFIGURAÇÕES PARA RPLIDAR S2 ===
-    throttle_scans: 1               # Processa TODOS os scans - mais rápido
+    # === CONFIGURAÇÕES PARA RPLIDAR S2 COMO SENSOR DE PROXIMIDADE ===
+    throttle_scans: 1               # Processa TODOS os scans - dados brutos
     transform_publish_period: 0.02  # 50Hz para map->odom transform
-    map_update_interval: 0.1        # 10Hz - MUITO RÁPIDO para ver mapa sendo montado
-    resolution: 0.015               # 1.5cm por pixel - ALTA RESOLUÇÃO (células menores)
+    map_update_interval: 0.1        # 10Hz - RÁPIDO para ver mapa sendo montado
+    resolution: 0.02                # 2cm por pixel - boa resolução
     max_laser_range: 30.0           # 30m - alcance máximo do RPLidar S2
-    minimum_time_interval: 0.05     # 50ms - atualização muito rápida
+    min_laser_range: 0.05           # 5cm - SENSOR DE PROXIMIDADE (não ignorar < 15cm)
+    minimum_time_interval: 0.05     # 50ms - atualização rápida
     transform_timeout: 0.2
     tf_buffer_duration: 30.
     stack_size_to_use: 40000000
     enable_interactive_mode: true
-    
-    # === LIMITAÇÃO ANGULAR: 90° A 270° (FRENTE E LATERAIS) ===
-    # Ângulos em radianos: 90° = π/2, 270° = 3π/2
-    angle_filter_threshold: 1.5708  # π/2 = 90°
-    # O SLAM vai usar apenas os dados entre 90° e 270°
     use_response_expansion: true
 
     # === SCAN MATCHING OTIMIZADO PARA RPLIDAR S2 ===

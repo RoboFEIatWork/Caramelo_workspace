@@ -1,0 +1,54 @@
+{
+  "checkpoints": [
+    {
+      "name": "Checkpoint_1_Entrada",
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "orientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      },
+      "description": "Ponto de entrada - ajuste as coordenadas conforme seu mapa"
+    },
+    {
+      "name": "Checkpoint_2_Centro",
+      "position": {
+        "x": 2.0,
+        "y": 1.0,
+        "z": 0.0
+      },
+      "orientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.707,
+        "w": 0.707
+      },
+      "description": "Ponto central - robô vira 90 graus"
+    },
+    {
+      "name": "Checkpoint_3_Destino",
+      "position": {
+        "x": 4.0,
+        "y": 2.0,
+        "z": 0.0
+      },
+      "orientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 1.0,
+        "w": 0.0
+      },
+      "description": "Ponto de destino - robô vira 180 graus"
+    }
+  ],
+  "notes": [
+    "Substitua as coordenadas pelos valores reais do seu mapa",
+    "Use RViz para encontrar as coordenadas corretas",
+    "Orientação em quaternion: w=1.0 significa 0 graus"
+  ]
+}

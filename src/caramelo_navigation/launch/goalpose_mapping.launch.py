@@ -13,22 +13,19 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     """
-    Launch file para mapeamento manual do ambiente usando goals no RViz.
+    Launch file para mapeamento usando goals no RViz (clique para navegar).
     
     IMPORTANTE: Este launch NÃO inclui encoders e PWM!
     Execute separadamente em terminais diferentes:
     1. Terminal 1: ros2 launch caramelo_bringup encoder_bringup.launch.py
     2. Terminal 2: ros2 launch caramelo_bringup pwm_bringup.launch.py  
-    3. Terminal 3: ros2 launch caramelo_navigation manual_mapping.launch.py
+    3. Terminal 3: ros2 launch caramelo_navigation goalpose_mapping.launch.py
     
-    Este launch inicia:
-    - LIDAR (rplidar) com filtro
-    - SLAM Toolbox
-    - Conversor Twist → TwistStamped (dedicado para este fluxo)
-    - Navegador de waypoints simples
-    - Filtro de segurança cmd_vel
-    - Monitor cmd_vel
-    - RViz para visualização e envio de goals
+    Como usar:
+    1. Clique em "2D Nav Goal" no RViz
+    2. Clique no mapa onde quer que o robô vá
+    3. O robô navegará para lá enquanto constrói o mapa
+    4. Para salvar: ros2 run nav2_map_server map_saver_cli -f goalpose_map
     """
     
     # Configurações

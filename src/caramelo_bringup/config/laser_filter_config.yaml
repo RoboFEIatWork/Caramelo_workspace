@@ -1,9 +1,0 @@
-laser_scan_filter:
-  ros__parameters:
-    filter_chain:
-      - name: angle_filter
-        type: laser_filters/LaserScanAngularBoundsFilter
-        params:
-          lower_angle: -1.57  # -90 graus em radianos (esquerda)
-          upper_angle: 1.57   # +90 graus em radianos (direita)
-          use_message_range_limits: false

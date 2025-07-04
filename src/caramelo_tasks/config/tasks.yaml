@@ -1,0 +1,30 @@
+task_list:
+  - object: "R20"
+    pick_from: "WS3"
+    place_to: "WS5"
+  - object: "M20"
+    pick_from: "WS1"
+    place_to: "WS2"
+  - object: "F20_20_B"
+    pick_from: "WS4"
+    place_to: "WS6"
+
+workstations:
+  WS1:
+    position: [1.0, 1.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+  WS2:
+    position: [2.0, 1.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+  WS3:
+    position: [1.0, 2.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+  WS4:
+    position: [2.0, 2.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+  WS5:
+    position: [3.0, 1.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+  WS6:
+    position: [3.0, 2.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]

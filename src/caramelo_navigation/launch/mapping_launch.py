@@ -16,14 +16,13 @@ def generate_launch_description():
     
     IMPORTANTE: Este launch NÃO inclui encoder e PWM!
     Execute separadamente em terminais diferentes:
-    1. Terminal 1: ros2 launch caramelo_bringup bringup_encoder.launch.py
-    2. Terminal 2: ros2 launch caramelo_bringup bringup_pwm.launch.py
+    1. Terminal 1: ros2 launch caramelo_bringup encoder_bringup.launch.py
+    2. Terminal 2: ros2 launch caramelo_bringup pwm_bringup.launch.py
     3. Terminal 3: ros2 launch caramelo_navigation mapping_launch.py
     
     Este launch inicia:
-    - LIDAR (rplidar)
-    - SLAM Toolbox
-    - Conversor Twist → TwistStamped
+    - LIDAR (rplidar) - DADOS BRUTOS como sensor de proximidade
+    - SLAM Toolbox - configurado para RPLidar S2
     - RViz para visualização
     """
     
@@ -60,18 +59,8 @@ def generate_launch_description():
         }.items()
     )
 
-    # Filtro LIDAR - remove pontos da carcaça e ruído
-    lidar_filter_node = Node(
-        package='caramelo_navigation',
-        executable='lidar_filter',
-        name='lidar_filter',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-        remappings=[
-            ('/scan_raw', '/scan'),  # Recebe scan bruto do LIDAR
-            ('/scan', '/scan_filtered')  # Publica scan filtrado
-        ]
-    )
+    # SEM FILTRO LIDAR - RPLidar S2 é muito bom, usar dados brutos
+    # Também usamos como sensor de proximidade (não ignorar < 15cm)
 
     # Robot Localization EKF - DESABILITADO para mapeamento mais limpo
     # start_ekf_cmd = IncludeLaunchDescription(
@@ -88,7 +77,7 @@ def generate_launch_description():
     # no teleop_keyboard.launch.py que é chamado pelo teleop_mapping.launch.py
     # Evita conflito de nós com mesmo nome rodando simultaneamente
 
-    # SLAM Toolbox - USA scan filtrado
+    # SLAM Toolbox - USA dados brutos do LIDAR
     start_slam_toolbox_node = Node(
         parameters=[
             slam_params_file,
@@ -97,11 +86,8 @@ def generate_launch_description():
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
-        output='screen',
-        remappings=[
-            ('/scan', '/scan_filtered')  # Usa scan filtrado para mapeamento
-        ]
-        # Removido remapping de odometria - usar dos encoders diretamente
+        output='screen'
+        # Usa /scan diretamente (dados brutos do RPLidar S2)
     )
 
     # Lifecycle Manager para SLAM
@@ -133,11 +119,10 @@ def generate_launch_description():
     ld.add_action(declare_use_sim_time_cmd)
 
     # Adiciona ações
-    ld.add_action(start_lidar_cmd)           # LIDAR
-    ld.add_action(lidar_filter_node)         # Filtro LIDAR (remove carcaça)
+    ld.add_action(start_lidar_cmd)           # LIDAR (dados brutos, sem filtro)
     # ld.add_action(start_ekf_cmd)            # EKF - DESABILITADO
     # twist_converter incluído no teleop_keyboard.launch (via teleop_mapping)
-    ld.add_action(start_slam_toolbox_node)   # SLAM (usa scan filtrado)
+    ld.add_action(start_slam_toolbox_node)   # SLAM (usa scan bruto)
     ld.add_action(start_lifecycle_manager_cmd) # Lifecycle manager
     ld.add_action(start_rviz_cmd)            # RViz
 
