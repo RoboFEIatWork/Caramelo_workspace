@@ -22,56 +22,54 @@ slam_toolbox:
     publish_scan_match_odom: false  # NÃO sobrescrever odometria dos encoders
     
     debug_logging: false
-    throttle_scans: 1
+    
+    # === CONFIGURAÇÕES PARA RPLIDAR S2 ===
+    throttle_scans: 1               # Processa TODOS os scans - mais rápido
     transform_publish_period: 0.02  # 50Hz para map->odom transform
-    map_update_interval: 0.3        # 3.3Hz - moderado para mapa limpo
-    resolution: 0.02                # 2cm por pixel - boa resolução
-    max_laser_range: 20.0
-    minimum_time_interval: 0.1      # Tempo mínimo entre correções
+    map_update_interval: 0.1        # 10Hz - MUITO RÁPIDO para ver mapa sendo montado
+    resolution: 0.015               # 1.5cm por pixel - ALTA RESOLUÇÃO (células menores)
+    max_laser_range: 30.0           # 30m - alcance máximo do RPLidar S2
+    minimum_time_interval: 0.05     # 50ms - atualização muito rápida
     transform_timeout: 0.2
     tf_buffer_duration: 30.
     stack_size_to_use: 40000000
     enable_interactive_mode: true
-    throttle_scans: 1
-    transform_publish_period: 0.02  # Taxa normal - 50Hz
-    map_update_interval: 1.0        # MAIS LENTO - Era 0.2, agora 1Hz para mapa mais estável
-    resolution: 0.02                # RESOLUÇÃO NORMAL - Era 0.015, agora 2cm por pixel
-    max_laser_range: 20.0
-    minimum_time_interval: 0.2      # MENOS RESPONSIVO - Era 0.05, agora 0.2s para mais estabilidade
-    transform_timeout: 0.2          # Normal
-    tf_buffer_duration: 30.
-    stack_size_to_use: 40000000
-    enable_interactive_mode: true
+    
+    # === LIMITAÇÃO ANGULAR: 90° A 270° (FRENTE E LATERAIS) ===
+    # Ângulos em radianos: 90° = π/2, 270° = 3π/2
+    angle_filter_threshold: 1.5708  # π/2 = 90°
+    # O SLAM vai usar apenas os dados entre 90° e 270°
+    use_response_expansion: true
 
-    # General Parameters - SCAN MATCHING APENAS PARA ALINHAMENTO DE PAREDES
+    # === SCAN MATCHING OTIMIZADO PARA RPLIDAR S2 ===
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.4    # CORREÇÕES A CADA 40cm
-    minimum_travel_heading: 0.4     # CORREÇÕES ANGULARES A CADA ~23°
-    scan_buffer_size: 8             # BUFFER PEQUENO
-    scan_buffer_maximum_scan_distance: 15.0   
-    link_match_minimum_response_fine: 0.5     # MUITO RIGOROSO - só alinhamentos óbvios
-    link_scan_maximum_distance: 0.6           # CORREÇÕES MICRO-LOCAIS
-    loop_search_maximum_distance: 1.5         # LOOPS MUITO CONSERVADORES
-    do_loop_closing: false                    # SEM LOOP CLOSING - evita saltos
-    loop_match_minimum_chain_size: 20         # Não usado (loop closing off)
-    loop_match_maximum_variance_coarse: 0.6   # Não usado
-    loop_match_minimum_response_coarse: 0.8   # Não usado
-    loop_match_minimum_response_fine: 0.8     # Não usado
+    minimum_travel_distance: 0.2    # 20cm - atualização frequente
+    minimum_travel_heading: 0.2     # ~11° - atualização frequente
+    scan_buffer_size: 10            # Buffer maior para melhor matching
+    scan_buffer_maximum_scan_distance: 30.0  # Alcance máximo RPLidar S2
+    link_match_minimum_response_fine: 0.5    # Aceita matches razoáveis
+    link_scan_maximum_distance: 1.0          # Correções locais normais
+    loop_search_maximum_distance: 3.0        # Loop closure normal
+    do_loop_closing: true                    # HABILITADO para melhor mapa
+    loop_match_minimum_chain_size: 10
+    loop_match_maximum_variance_coarse: 0.8
+    loop_match_minimum_response_coarse: 0.5
+    loop_match_minimum_response_fine: 0.5
 
-    # Correlation Parameters - CORREÇÕES MUITO CONSERVADORAS
-    correlation_search_space_dimension: 0.2  # MENOR ÁREA - Era 0.4, correções muito locais
-    correlation_search_space_resolution: 0.02  # MENOS FINO - Era 0.008, menos precisão mas mais estável
-    correlation_search_space_smear_deviation: 0.15  # MAIOR DESVIO - Era 0.08, mais tolerante 
+    # === PARÂMETROS DE CORRELAÇÃO PARA RPLIDAR S2 ===
+    correlation_search_space_dimension: 0.5  # Área de busca normal
+    correlation_search_space_resolution: 0.01  # Alta precisão
+    correlation_search_space_smear_deviation: 0.1  # Baixa tolerância
 
     # Correlation Parameters - Loop Closure Parameters
     loop_search_space_dimension: 8.0
     loop_search_space_resolution: 0.05
     loop_search_space_smear_deviation: 0.03
 
-    # Scan Matcher Parameters - PENALIDADES ALTAS PARA MAPA LIMPO
-    distance_variance_penalty: 1.5      # ALTA PENALIDADE - Era 0.7, muito conservador
-    angle_variance_penalty: 2.5         # ALTA PENALIDADE - Era 1.5, muito conservador    
+    # === PENALIDADES NORMAIS PARA RPLIDAR S2 ===
+    distance_variance_penalty: 0.5      # Penalidade baixa - confia no RPLidar S2
+    angle_variance_penalty: 1.0         # Penalidade normal    
 
     fine_search_angle_offset: 0.00349     
     coarse_search_angle_offset: 0.349   

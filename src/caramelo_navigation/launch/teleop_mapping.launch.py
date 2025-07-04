@@ -14,9 +14,10 @@ def generate_launch_description():
     """
     Launch file para mapeamento usando teleop_keyboard.
     
-    EXECUTE EM TERMINAIS SEPARADOS:
-    1. Terminal 1: ros2 launch caramelo_bringup pwm_bringup.launch.py
-    2. Terminal 2: ros2 launch caramelo_navigation teleop_mapping.launch.py
+    EXECUTE EM TERMINAIS SEPARADOS (PADRÃO):
+    1. Terminal 1: ros2 launch caramelo_bringup encoder_bringup.launch.py
+    2. Terminal 2: ros2 launch caramelo_bringup pwm_bringup.launch.py
+    3. Terminal 3: ros2 launch caramelo_navigation teleop_mapping.launch.py
     
     Como usar:
     1. Use as teclas do teclado para mover o robô:
@@ -36,21 +37,14 @@ def generate_launch_description():
         default_value='false',
         description='Usar tempo de simulação')
 
-    # 1. Encoders (com URDF)
-    encoder_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('caramelo_bringup'),
-                         'launch', 'encoder_bringup.launch.py'))
-    )
-
-    # 2. Mapeamento SLAM (com filtro de LIDAR)
+    # 1. Mapeamento SLAM (com filtro de LIDAR)
     mapping_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('caramelo_navigation'),
                          'launch', 'mapping_launch.py'))
     )
 
-    # 3. Teleop Keyboard (para controle manual)
+    # 2. Teleop Keyboard (para controle manual)
     teleop_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('caramelo_bringup'),
@@ -59,7 +53,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_use_sim_time_cmd,
-        encoder_launch,         # Encoders + URDF
         mapping_launch,         # LIDAR + SLAM + RViz + twist_converter + filtro
         teleop_launch,          # Controle por teclado
     ])
