@@ -1,92 +1,85 @@
 # Caramelo Navigation
 
-## Descrição
-Pacote responsável pela navegação, SLAM e fusão sensorial do robô Caramelo. Implementa estratégias de navegação autônoma e mapeamento.
+Pacote de navegação simplificado para o robô Caramelo.
 
-## Funcionalidades
-- **EKF Sensor Fusion**: Fusão de odometria dos encoders com IMU
-- **SLAM**: Mapeamento simultâneo e localização com LiDAR
-- **Nav2 Integration**: Navegação autônoma com planejamento de trajetória
-- **Configurações Otimizadas**: Para robôs mecanum com deslizamento
+## Estrutura do Pacote
 
-## Launches Disponíveis
+### Scripts Principais
+- `simple_waypoint_navigator.py` - Navegador básico de waypoints
+- `checkpoint_navigator.py` - Navegador de checkpoints
+- `interactive_robot_positioner.py` - Criador interativo de waypoints
 
-### Fusão Sensorial
+### Launch Files
+- `interactive_waypoint_creator.launch.py` - Lança o sistema de criação de waypoints
+- `mapping_launch.py` - Sistema de mapeamento
+- `navigation_launch.py` - Sistema de navegação
+- `load_map.launch.py` - Carrega mapa existente
+- `map_display.launch.py` - Exibe mapa no RViz
+- `slam_launch.py` - SLAM
+- `teleop_mapping.launch.py` - Teleoperação + mapeamento
+- `checkpoint_navigation.launch.py` - Navegação por checkpoints
+
+### Configurações
+- `waypoints.json` - Arquivo de waypoints (WS01, WS02, START, FINISH)
+- `checkpoint_creator_final.rviz` - Configuração do RViz
+- `*.yaml` - Parâmetros de navegação, SLAM, AMCL, etc.
+
+## Como Usar
+
+### 1. Criar Waypoints Interativamente
+
 ```bash
-# EKF para fusão encoder + IMU
-ros2 launch caramelo_navigation ekf_encoder_imu_launch.py
+# Inicie o sistema de criação de waypoints
+ros2 launch caramelo_navigation interactive_waypoint_creator.launch.py
 
-# ZED IMU apenas (quando disponível)
-ros2 launch caramelo_navigation zed_imu_launch.py
+# No RViz:
+# - Use "2D Pose Estimate" para MOVER o robô virtual
+# - Use "2D Nav Goal" para SALVAR waypoint com orientação
+# - Use "Publish Point" para SALVAR waypoint com orientação padrão
 ```
 
-### SLAM e Navegação
-```bash
-# SLAM com SLAM Toolbox
-ros2 launch caramelo_navigation slam_launch.py
+### 2. Editar Waypoints Manualmente
 
-# Mapeamento
-ros2 launch caramelo_navigation mapping_launch.py
+Edite o arquivo: `/home/work/Caramelo_workspace/src/caramelo_navigation/config/waypoints.json`
 
-# Navegação completa com Nav2
-ros2 launch caramelo_navigation nav2_slam_launch.py
+Estrutura:
+```json
+{
+  "frame_id": "map",
+  "waypoints": [
+    {
+      "name": "START",
+      "position": {"x": 0.0, "y": 0.0, "z": 0.0},
+      "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0}
+    },
+    {
+      "name": "WS01",
+      "position": {"x": 1.0, "y": 2.0, "z": 0.0},
+      "orientation": {"x": 0.0, "y": 0.0, "z": 0.707, "w": 0.707}
+    }
+  ]
+}
 ```
 
-## Configurações Principais
+### 3. Navegação
 
-### EKF (Fusão Sensorial)
-- **Arquivo**: `config/ekf_encoder_imu_params.yaml`
-- **Sensores**: Encoders (velocidades) + IMU ZED (orientação)
-- **Saída**: `/odom` fusionado e robusto
+```bash
+# Navegação básica
+ros2 run caramelo_navigation simple_waypoint_navigator
 
-### SLAM Toolbox
-- **Arquivo**: `config/slam_toolbox_params.yaml`
-- **Otimizado**: Para robôs com deslizamento
-- **Saída**: Mapa 2D em `/map`
+# Navegação por checkpoints
+ros2 run caramelo_navigation checkpoint_navigator
+```
 
-### Nav2
-- **Arquivo**: `config/nav2_params.yaml`
-- **Configurado**: Para robô omnidirecional mecanum
-- **Funcionalidades**: Planejamento, controle local, comportamentos
+## Naming Convention
 
-## Tópicos Principais
+- **START**: Posição inicial (0,0,0)
+- **WS01, WS02, WS03, ...**: Work Stations numeradas
+- **FINISH**: Posição final (0,0,0)
 
-### Entradas
-- `/odom` - Odometria dos encoders
-- `/scan` - Dados LiDAR
-- `/zed/zed_node/imu/data` - IMU da ZED
-- `/cmd_vel` - Comandos de navegação
+## Orientação (Quaternions)
 
-### Saídas
-- `/odom` - Odometria fusionada (EKF)
-- `/map` - Mapa gerado (SLAM)
-- `/plan` - Trajetórias planejadas
-- `/local_costmap/costmap` - Mapa de custos local
-
-## Estratégia de Navegação
-
-1. **Sensor Fusion**: EKF combina encoders + IMU para odometria robusta
-2. **SLAM**: LiDAR gera mapa 2D do ambiente
-3. **Planning**: Nav2 planeja trajetórias no mapa
-4. **Control**: DWB controla movimento omnidirecional
-5. **Recovery**: Comportamentos de recuperação em falhas
-
-## Configuração para Mecanum
-
-### Características Especiais
-- **Movimentação lateral**: Configurada para vy ≠ 0
-- **Deslizamento compensado**: Covariâncias ajustadas
-- **Modelo omnidirecional**: AMCL configurado para mecanum
-- **DWB otimizado**: Samples em vx, vy e vtheta
-
-### Ajustes de Deslizamento
-- **Encoder vx**: Covariância 3e-2
-- **Encoder vy**: Covariância 5e-2 (mais deslizamento lateral)
-- **IMU orientação**: Covariância baixa (sensor confiável)
-
-## Dependências
-- nav2_bringup
-- slam_toolbox
-- robot_localization
-- dwb_core
-- nav2_amcl
+- 0°: `(0, 0, 0, 1)`
+- 90°: `(0, 0, 0.707, 0.707)`
+- 180°: `(0, 0, 1, 0)`
+- 270°: `(0, 0, -0.707, 0.707)`

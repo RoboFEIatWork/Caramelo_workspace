@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
 import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
+from launch.actions import (DeclareLaunchArgument, GroupAction,
+                            SetEnvironmentVariable)
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import LoadComposableNodes, Node
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from nav2_common.launch import RewrittenYaml
-from ament_index_python.packages import get_package_share_directory
+
 
 def generate_launch_description():
     
@@ -77,14 +80,6 @@ def generate_launch_description():
 
     declare_log_level_cmd = DeclareLaunchArgument(
         'log_level', default_value='info', description='log level')
-
-    # Nó conversor Twist → TwistStamped (para compatibilidade com mecanum drive)
-    twist_converter_node = Node(
-        package='caramelo_bringup',
-        executable='twist_converter_node',
-        name='twist_converter',
-        output='screen'
-    )
 
     # Especifica os nós composáveis
     composable_nodes = [
@@ -254,7 +249,6 @@ def generate_launch_description():
     ld.add_action(declare_log_level_cmd)
 
     # Adiciona ações
-    ld.add_action(twist_converter_node)
     ld.add_action(load_composable_nodes)
     ld.add_action(start_controller_server_cmd)
     ld.add_action(start_smoother_server_cmd)

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import rclpy
-from rclpy.node import Node
 from geometry_msgs.msg import Twist, TwistStamped
+from rclpy.node import Node
+
 
 class TwistToTwistStampedConverter(Node):
     def __init__(self):
@@ -55,9 +56,18 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    
-    node.destroy_node()
-    rclpy.shutdown()
+    finally:
+        # Destruir nó antes de shutdown
+        try:
+            node.destroy_node()
+        except:
+            pass
+        
+        # Shutdown apenas se ainda não foi feito
+        try:
+            rclpy.shutdown()
+        except:
+            pass
 
 if __name__ == '__main__':
     main()
