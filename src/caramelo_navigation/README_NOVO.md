@@ -1,42 +1,26 @@
 # Caramelo Navigation
 
-Pacote de navegação completo para o robô Caramelo com navegação autônoma por waypoints.
+> **🚨 LEMBRETE IMPORTANTE**: Robô em manutenção. Quando voltar, usar as instruções abaixo!
 
-## 🚀 **GUIA RÁPIDO - ROBÔ REAL**
-
-### 1. Navegação Autônoma (Sistema Completo)
+## 🤖 **COMANDOS PARA ROBÔ REAL - COPIAR E COLAR**
 
 ```bash
-# ⚠️ IMPORTANTE: Primeiro rodar PWM e Encoder bringup!
-# Depois usar um dos comandos abaixo:
+# 1. Terminal 1: PWM Bringup
+ros2 run your_package pwm_bringup
 
-# Navegação com arquivos padrão
+# 2. Terminal 2: Encoder Bringup  
+ros2 run your_package encoder_bringup
+
+# 3. Terminal 3: Build e Navegação
+cd /home/work/Caramelo_workspace
+colcon build --packages-select caramelo_navigation
+source install/setup.bash
 ros2 launch caramelo_navigation autonomous_navigation.launch.py
 
-# Navegação com arquivos customizados
+# 4. (Opcional) Com arquivos customizados
 ros2 launch caramelo_navigation autonomous_navigation.launch.py \
-  map_file:=/home/work/Caramelo_workspace/mapa_customizado.yaml \
-  waypoints_file:=/home/work/Caramelo_workspace/src/caramelo_navigation/config/waypoints_customizado.json
-```
-
-### 2. Criar Waypoints Interativamente
-
-```bash
-# Primeiro carregar o mapa
-ros2 launch caramelo_navigation interactive_waypoint_creator.launch.py
-
-# Depois usar RViz para marcar pontos e salvar
-```
-
-### 3. Testar Sistema Individual
-
-```bash
-# Testar apenas o navegador (depois do bringup)
-ros2 run caramelo_navigation autonomous_waypoint_navigator.py
-
-# Com parâmetros específicos
-ros2 run caramelo_navigation autonomous_waypoint_navigator.py \
-  --ros-args -p map_file:=/path/to/map.yaml -p waypoints_file:=/path/to/waypoints.json
+  map_file:=/home/work/Caramelo_workspace/meu_mapa.yaml \
+  waypoints_file:=/home/work/Caramelo_workspace/src/caramelo_navigation/config/meus_waypoints.json
 ```
 
 ## ⚠️ **CHECKLIST PARA ROBÔ REAL**
@@ -49,7 +33,11 @@ Antes de testar, verificar:
 - [ ] Waypoints criados e salvos no JSON
 - [ ] LiDAR funcionando (verificar `/scan`)
 
-## Arquivos Importantes
+---
+
+## Descrição
+
+Pacote de navegação completo para o robô Caramelo com navegação autônoma por waypoints.
 
 ## Funcionalidades
 
@@ -71,47 +59,26 @@ Antes de testar, verificar:
 
 ## Scripts Principais
 
-- `autonomous_waypoint_navigator.py` - **Navegador autônomo** (NOVO!)
+- `autonomous_waypoint_navigator.py` - **Navegador autônomo** (PRINCIPAL!)
 - `interactive_robot_positioner.py` - Criador interativo de waypoints
 - `simple_waypoint_navigator.py` - Navegador básico
 - `checkpoint_navigator.py` - Navegador de checkpoints
 
 ## Como Usar
 
-### 🤖 **INSTRUÇÕES PARA ROBÔ REAL - NÃO ESQUECER!**
+### 1. Navegação Autônoma (Sistema Completo)
 
 ```bash
-# 1. Preparar terminais (PWM e Encoder bringup)
-# Terminal 1: ros2 run your_package pwm_bringup
-# Terminal 2: ros2 run your_package encoder_bringup
+# ⚠️ IMPORTANTE: Primeiro rodar PWM e Encoder bringup!
+# Depois usar um dos comandos abaixo:
 
-# 2. Build e source
-cd /home/work/Caramelo_workspace
-colcon build --packages-select caramelo_navigation
-source install/setup.bash
-
-# 3. Navegação com arquivos padrão
+# Navegação com arquivos padrão
 ros2 launch caramelo_navigation autonomous_navigation.launch.py
 
-# 4. Ou com arquivos personalizados
+# Navegação com arquivos customizados
 ros2 launch caramelo_navigation autonomous_navigation.launch.py \
-  map_file:=/caminho/para/seu_mapa.yaml \
-  waypoints_file:=/caminho/para/seus_waypoints.json
-```
-
-### 1. Navegação Autônoma (Recomendado)
-
-```bash
-# Build e source
-cd /home/work/Caramelo_workspace
-colcon build --packages-select caramelo_navigation
-source install/setup.bash
-
-# Navegação completa (mapa + navegação + waypoints)
-ros2 launch caramelo_navigation autonomous_navigation.launch.py
-
-# Ou apenas o navegador (se Nav2 já está rodando)
-ros2 run caramelo_navigation autonomous_waypoint_navigator
+  map_file:=/home/work/Caramelo_workspace/mapa_customizado.yaml \
+  waypoints_file:=/home/work/Caramelo_workspace/src/caramelo_navigation/config/waypoints_customizado.json
 ```
 
 ### 2. Criar Waypoints Interativamente
@@ -190,10 +157,10 @@ Exemplo:
 
 ### ⚙️ Configurações Ajustáveis
 ```python
-self.approach_distance = 0.3      # Distância para considerar "próximo" (metros)
-self.orientation_tolerance = 0.1  # Tolerância de orientação (radianos)
-self.max_approach_time = 30.0     # Tempo máximo para chegar no waypoint
-self.obstacle_distance = 0.5      # Distância mínima para obstáculos
+self.approach_distance = 0.25      # Distância para considerar "próximo" (metros)
+self.orientation_tolerance = 0.15  # Tolerância de orientação (radianos)
+self.max_approach_time = 45.0      # Tempo máximo para chegar no waypoint
+self.obstacle_distance = 0.6       # Distância mínima para obstáculos
 ```
 
 ## Requisitos
@@ -203,6 +170,8 @@ self.obstacle_distance = 0.5      # Distância mínima para obstáculos
 - **Localization**: AMCL ou sistema similar
 - **LiDAR**: Para detecção de obstáculos (`/scan`)
 - **TF**: Transformações entre `map` e `base_link`
+- **PWM Bringup**: Controle dos motores
+- **Encoder Bringup**: Odometria do robô
 
 ## Tópicos ROS2
 
@@ -217,16 +186,19 @@ O sistema mostra mensagens informativas:
 - 🚀 **Iniciando navegação pelos waypoints**
 - 📍 **Carregados X waypoints**
 - 🎯 **Enviando goal para WS01**
+- 🚨 **Obstáculo detectado a X.XXm!**
+- ⏹️ **Parado - aguardando obstáculo sair**
 - ✅ **Chegou em WS01!**
 - 🏁 **Todos os waypoints foram visitados!**
 
 ## Troubleshooting
 
 ### "Nav2 server não disponível"
-- Certifique-se que o Nav2 está rodando
+- Certifique-se que PWM e Encoder bringup estão rodando
 - Use: `ros2 launch caramelo_navigation autonomous_navigation.launch.py`
 
 ### Robô não se move
+- Verificar se PWM bringup está funcionando
 - Verificar se o mapa está carregado
 - Verificar TF entre map e base_link
 - Verificar se AMCL está funcionando
@@ -235,4 +207,13 @@ O sistema mostra mensagens informativas:
 - Verificar se `waypoints.json` existe
 - Verificar se tem waypoints "WS01", "WS02", etc.
 
-Para mais detalhes, consulte: `NAVEGACAO_AUTONOMA.md`
+### Obstáculos não detectados
+- Verificar se LiDAR está funcionando (`ros2 topic echo /scan`)
+- Verificar se há interferência no LiDAR
+
+## Documentação Adicional
+
+- `NAVEGACAO_AUTONOMA.md` - Detalhes técnicos do sistema
+- `ROBO_REAL_INSTRUCOES.md` - Instruções específicas para robô real
+
+**Sistema otimizado para robô real com detecção de obstáculos dinâmicos!** 🤖

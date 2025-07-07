@@ -1,10 +1,6 @@
 # Caramelo Navigation
 
-Pacote de navegação completo para o robô Caramelo com navegação autônoma por waypoints.
-
-## 🚀 **GUIA RÁPIDO - ROBÔ REAL**
-
-### 1. Navegação Autônoma (Sistema Completo)
+Pacote de navegação completo ### 1. Navegação Autônoma (Sistema Completo)
 
 ```bash
 # ⚠️ IMPORTANTE: Primeiro rodar PWM e Encoder bringup!
@@ -17,27 +13,7 @@ ros2 launch caramelo_navigation autonomous_navigation.launch.py
 ros2 launch caramelo_navigation autonomous_navigation.launch.py \
   map_file:=/home/work/Caramelo_workspace/mapa_customizado.yaml \
   waypoints_file:=/home/work/Caramelo_workspace/src/caramelo_navigation/config/waypoints_customizado.json
-```
-
-### 2. Criar Waypoints Interativamente
-
-```bash
-# Primeiro carregar o mapa
-ros2 launch caramelo_navigation interactive_waypoint_creator.launch.py
-
-# Depois usar RViz para marcar pontos e salvar
-```
-
-### 3. Testar Sistema Individual
-
-```bash
-# Testar apenas o navegador (depois do bringup)
-ros2 run caramelo_navigation autonomous_waypoint_navigator.py
-
-# Com parâmetros específicos
-ros2 run caramelo_navigation autonomous_waypoint_navigator.py \
-  --ros-args -p map_file:=/path/to/map.yaml -p waypoints_file:=/path/to/waypoints.json
-```
+```ramelo com navegação autônoma por waypoints.
 
 ## ⚠️ **CHECKLIST PARA ROBÔ REAL**
 

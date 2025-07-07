@@ -1,53 +1,225 @@
-# 🤖 Robô Caramelo - ROS2 Jazzy
+# 🤖 Robô Caramelo - Sistema Completo RoboCup@Work 2024
 
-O Caramelo é um robô móvel omnidirecional equipado com rodas mecanum, sensores avançados e sistema de navegação autônoma baseado em ROS2 Jazzy.
+## 📋 **GUIA COMPLETO DE OPERAÇÃO**
 
-## 📋 Visão Geral
+### 🚀 **1. SYSTEM.LAUNCH - Sistema Completo de Competição**
 
-### Hardware
-- **Base**: 4 rodas mecanum com encoders
-- **Sensores**: RPLidar S2, Câmera ZED 2i com IMU, Intel RealSense
-- **Controle**: Controladores ESP32 (PWM e Encoders)
-- **Comunicação**: USB serial para todos os dispositivos
+**O que faz:**
+- Inicia Navigation Stack (Nav2, AMCL, Map Server)
+- Inicia Task Executor (executa tarefas YAML)
+- Inicia Robot Description (URDF)
+- Inicia RViz (opcional)
 
-### Software
-- **ROS2**: Jazzy Jalisco
-- **SLAM**: SLAM Toolbox
-- **Navegação**: Nav2 Stack
-- **Fusão Sensorial**: robot_localization (EKF)
-
-## 🚀 Quick Start
-
-### 1. Pré-requisitos
+**Pré-requisitos (OBRIGATÓRIOS):**
 ```bash
-# Verificar sistema (execute primeiro!)
+# Terminal 1 - PWM Bringup
 cd /home/work/Caramelo_workspace
-python3 test_caramelo_integration.py
-```
-
-### 2. Inicialização dos Sensores
-```bash
-# Terminal 1: Controlador PWM
+source install/setup.bash
 ros2 launch caramelo_bringup pwm_bringup.launch.py
 
-# Terminal 2: Controlador de Encoders
+# Terminal 2 - Encoder Bringup  
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+ros2 launch caramelo_bringup encoder_bringup.launch.py
+```
+
+**Uso:**
+```bash
+# Terminal 3 - Sistema Completo
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+
+# Competição padrão
+ros2 launch caramelo_bringup system.launch.py
+
+# Com parâmetros customizados
+ros2 launch caramelo_bringup system.launch.py \
+  map_file:=/home/work/Caramelo_workspace/meu_mapa.yaml \
+  task_file:=competicao_tasks.yaml \
+  initial_pose_x:=0.5 \
+  initial_pose_y:=0.5 \
+  initial_pose_yaw:=1.57 \
+  use_rviz:=true
+```
+
+---
+
+### 🎯 **2. WAYPOINT NAVIGATION - Navegação por Waypoints**
+
+**O que faz:**
+- Navega automaticamente por waypoints pré-definidos
+- Evita obstáculos dinâmicos
+- Posicionamento preciso em cada waypoint
+
+**Pré-requisitos:**
+```bash
+# Terminal 1 - PWM Bringup
+ros2 launch caramelo_bringup pwm_bringup.launch.py
+
+# Terminal 2 - Encoder Bringup
+ros2 launch caramelo_bringup encoder_bringup.launch.py
+```
+
+**Uso:**
+```bash
+# Terminal 3 - Waypoint Navigation
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+
+# Navegação padrão
+ros2 launch caramelo_navigation autonomous_navigation.launch.py
+
+# Com arquivos customizados
+ros2 launch caramelo_navigation autonomous_navigation.launch.py \
+  map_file:=/home/work/Caramelo_workspace/meu_mapa.yaml \
+  waypoints_file:=/home/work/Caramelo_workspace/src/caramelo_navigation/config/meus_waypoints.json
+```
+
+---
+
+### 🗺️ **3. NAVIGATION - Navegação Manual/Goals**
+
+**O que faz:**
+- Permite enviar goals manualmente via RViz
+- Sistema de navegação completo Nav2
+- Localização AMCL
+
+**Pré-requisitos:**
+```bash
+# Terminal 1 - PWM Bringup
+ros2 launch caramelo_bringup pwm_bringup.launch.py
+
+# Terminal 2 - Encoder Bringup
+ros2 launch caramelo_bringup encoder_bringup.launch.py
+```
+
+**Uso:**
+```bash
+# Terminal 3 - Navigation
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+
+# Navegação padrão
+ros2 launch caramelo_navigation navigation_launch.py
+
+# Com mapa customizado
+ros2 launch caramelo_navigation navigation_launch.py \
+  map_file:=/home/work/Caramelo_workspace/meu_mapa.yaml \
+  use_rviz:=true
+```
+
+**Como usar:**
+1. Abrir RViz
+2. Usar "2D Nav Goal" para enviar goals
+3. Robô navega automaticamente
+
+---
+
+### �️ **4. TELEOP - Controle Manual**
+
+**O que faz:**
+- Controle manual do robô via teclado
+- Permite movimentação omnidirecional
+- Útil para testes e posicionamento
+
+**Pré-requisitos:**
+```bash
+# Terminal 1 - PWM Bringup
+ros2 launch caramelo_bringup pwm_bringup.launch.py
+
+# Terminal 2 - Encoder Bringup
+ros2 launch caramelo_bringup encoder_bringup.launch.py
+```
+
+**Uso:**
+```bash
+# Terminal 3 - Teleop
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+
+# Controle por teclado
+ros2 launch caramelo_bringup teleop_keyboard.launch.py
+```
+
+---
+
+### 🗺️ **5. MAPPING - Criação de Mapas**
+
+**O que faz:**
+- Cria mapas do ambiente usando SLAM
+- Salva mapas em formato .pgm e .yaml
+- Permite exploração do ambiente
+
+**Pré-requisitos:**
+```bash
+# Terminal 1 - PWM Bringup
+ros2 launch caramelo_bringup pwm_bringup.launch.py
+
+# Terminal 2 - Encoder Bringup
 ros2 launch caramelo_bringup encoder_bringup.launch.py
 
-# Terminal 3: LiDAR
+# Terminal 3 - LiDAR
 ros2 launch caramelo_bringup lidar_bringup.launch.py
-
-# Terminal 4: Visualização (opcional)
-ros2 launch caramelo_bringup visualization_bringup.launch.py
 ```
 
-### 3. Navegação e SLAM
+**Uso:**
 ```bash
-# Terminal 5: SLAM para mapeamento
+# Terminal 4 - SLAM
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+
+# Iniciar SLAM
 ros2 launch caramelo_navigation slam_launch.py
 
-# OU navegação com mapa existente
-ros2 launch caramelo_navigation caramelo_navigation_launch.py map:=/path/to/map.yaml
+# Terminal 5 - Teleop para explorar
+ros2 launch caramelo_bringup teleop_keyboard.launch.py
 ```
+
+**Como usar:**
+1. Mover o robô pelo ambiente usando teleop
+2. Observar mapa sendo criado no RViz
+3. Salvar mapa quando completo:
+```bash
+ros2 run nav2_map_server map_saver_cli -f /home/work/Caramelo_workspace/novo_mapa
+```
+
+---
+
+### 📍 **6. GOAL POSE MAPPING - Criação de Waypoints**
+
+**O que faz:**
+- Permite marcar waypoints interativamente
+- Cria arquivos JSON com coordenadas
+- Interface visual no RViz
+
+**Pré-requisitos:**
+```bash
+# Terminal 1 - PWM Bringup
+ros2 launch caramelo_bringup pwm_bringup.launch.py
+
+# Terminal 2 - Encoder Bringup
+ros2 launch caramelo_bringup encoder_bringup.launch.py
+```
+
+**Uso:**
+```bash
+# Terminal 3 - Waypoint Creator
+cd /home/work/Caramelo_workspace
+source install/setup.bash
+
+# Criar waypoints interativamente
+ros2 launch caramelo_navigation interactive_waypoint_creator.launch.py
+
+# Com mapa customizado
+ros2 launch caramelo_navigation interactive_waypoint_creator.launch.py \
+  map_file:=/home/work/Caramelo_workspace/meu_mapa.yaml
+```
+
+**Como usar:**
+1. Abrir RViz
+2. Usar "2D Nav Goal" para marcar waypoints
+3. Nomear waypoints (WS01, WS02, etc.)
+4. Salvar quando terminar
 
 ### 4. Controle do Robô
 ```bash
@@ -223,86 +395,99 @@ ros2 param set /ekf_filter_node use_sim_time false
 ros2 run tf2_ros tf2_echo base_link laser_frame
 ```
 
-## 📋 Configuração ROS2 Jazzy
+---
 
-### Dependências Essenciais
+## 🔧 **VERIFICAÇÕES DO SISTEMA**
+
+### Verificar se tudo está funcionando:
 ```bash
-# Nav2 Stack
-sudo apt install ros-jazzy-nav2-bringup ros-jazzy-nav2-lifecycle-manager
+# Verificar tópicos ativos
+ros2 topic list
 
-# SLAM
-sudo apt install ros-jazzy-slam-toolbox
+# Verificar nós rodando
+ros2 node list
 
-# Controladores
-sudo apt install ros-jazzy-mecanum-drive-controller
-sudo apt install ros-jazzy-controller-manager
+# Verificar transformações
+ros2 run tf2_tools view_frames
 
-# Filtros e ferramentas
-sudo apt install ros-jazzy-laser-filters ros-jazzy-robot-localization
-sudo apt install ros-jazzy-xacro ros-jazzy-tf2-tools
+# Verificar se robô está publicando odometria
+ros2 topic echo /odom
+
+# Verificar se robô está recebendo comandos
+ros2 topic echo /cmd_vel
+
+# Verificar dados do LiDAR
+ros2 topic echo /scan
 ```
 
-### Build do Workspace
-```bash
-cd ~/Caramelo_workspace
-source /opt/ros/jazzy/setup.bash
-colcon build
-source install/setup.bash
-```
-
-## 📊 Performance e Otimização
-
-### Configurações Recomendadas
-```bash
-# Variáveis de ambiente
-export ROS_DOMAIN_ID=42
-export RCUTILS_LOGGING_BUFFERED_STREAM=1
-export RCUTILS_COLORIZED_OUTPUT=1
-```
-
-### Melhorias no Jazzy
-- **Build time**: ~20% mais rápido que Humble
-- **Node startup**: Inicialização otimizada
-- **Memory usage**: Uso de memória reduzido
-- **TF performance**: Cálculos mais eficientes
-
-## 🎯 Próximos Passos
-
-### Para Desenvolvimento
-1. Ajustar parâmetros EKF com dados reais
-2. Implementar navegação autônoma
-3. Adicionar comportamentos de desvio
-4. Integrar recursos visuais da ZED
-
-### Para Operação
-1. Executar teste de integração
-2. Usar teleoperação para controle manual
-3. Iniciar SLAM para mapeamento
-4. Monitorar performance do sistema
-5. Salvar mapas para navegação autônoma
-
-## 📞 Suporte e Documentação
-
-### Documentação Adicional
-- **Cada pacote** possui seu próprio `README.md` com detalhes específicos
-- **Arquivos de configuração** estão documentados inline
-- **Scripts de teste** incluem validação automática
-
-### Em Caso de Problemas
-1. Execute o teste de integração: `python3 test_caramelo_integration.py`
-2. Verifique a seção de troubleshooting acima
-3. Consulte os logs do ROS2: `ros2 log view`
-4. Verifique os READMEs específicos dos pacotes
-
-## ⚠️ Notas Importantes
-
-1. **Sempre execute o teste de integração primeiro** para garantir que todos os componentes estão prontos
-2. **Controladores PWM e Encoder são separados** por design para segurança
-3. **ZED IMU fornece referência principal de orientação** - encoders fornecem velocidades
-4. **EKF gerencia a fusão sensorial** - não contorne para odometria
-5. **Mapeamento USB é crítico** - garanta que as regras udev estão aplicadas
+### Tópicos Importantes:
+- `/cmd_vel` - Comandos para os motores
+- `/odom` - Odometria dos encoders
+- `/scan` - Dados do LiDAR
+- `/amcl_pose` - Posição estimada do robô
+- `/goal_pose` - Goals de navegação
+- `/tf` - Transformações entre frames
 
 ---
+
+## 🚨 **TROUBLESHOOTING**
+
+### PWM não responde:
+1. Verificar se terminal PWM está ativo
+2. `ros2 topic echo /cmd_vel` deve mostrar comandos
+3. Reiniciar PWM bringup se necessário
+
+### Encoder não funciona:
+1. Verificar se terminal Encoder está ativo
+2. `ros2 topic echo /odom` deve mostrar odometria
+3. Reiniciar Encoder bringup se necessário
+
+### Navegação falha:
+1. Verificar se mapa está correto
+2. Verificar se AMCL está localizando (`ros2 topic echo /amcl_pose`)
+3. Verificar se há obstáculos no caminho
+
+### LiDAR não detecta:
+1. Verificar se LiDAR está conectado
+2. `ros2 topic echo /scan` deve mostrar dados
+3. Reiniciar LiDAR se necessário
+
+---
+
+## 📋 **ARQUIVOS DE CONFIGURAÇÃO**
+
+### Mapas:
+- `/home/work/Caramelo_workspace/mapa_20250704_145039.yaml` - Mapa principal
+- `/home/work/Caramelo_workspace/mapa_20250704_145039.pgm` - Imagem do mapa
+
+### Waypoints:
+- `/home/work/Caramelo_workspace/src/caramelo_navigation/config/waypoints.json` - Waypoints padrão
+
+### Tarefas:
+- `/home/work/Caramelo_workspace/src/caramelo_tasks/config/tasks.yaml` - Tarefas da competição
+
+### Configurações:
+- `/home/work/Caramelo_workspace/src/caramelo_navigation/config/nav2_params.yaml` - Parâmetros Nav2
+- `/home/work/Caramelo_workspace/src/caramelo_navigation/config/ekf_params.yaml` - Filtro EKF
+
+---
+
+## 🏆 **MODO COMPETIÇÃO**
+
+### Para RoboCup@Work:
+1. ✅ **PWM e Encoder** rodando em terminais separados
+2. ✅ **Mapa** do ambiente carregado
+3. ✅ **Tarefas** configuradas no YAML
+4. ✅ **Sistema** iniciado com `system.launch.py`
+5. ✅ **Robô** opera autonomamente
+
+### Comando único para competição:
+```bash
+# Após PWM e Encoder estarem rodando
+ros2 launch caramelo_bringup system.launch.py map_file:=/home/work/Caramelo_workspace/mapa_20250704_145039.yaml task_file:=tasks.yaml
+```
+
+**O robô executará todas as tarefas automaticamente!** 🚀
 
 **Status**: ✅ Sistema completo, integrado e operacional  
 **Versão ROS2**: Jazzy Jalisco  
