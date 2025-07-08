@@ -1,0 +1,15 @@
+scan_filter_chain:
+  ros__parameters:
+    scan_filter_chain:
+      - name: angle
+        type: laser_filters/LaserScanAngularBoundsFilter
+        params:
+          lower_angle: -1.5708  # -90 graus em radianos
+          upper_angle: 1.5708   # +90 graus em radianos
+      - name: range
+        type: laser_filters/LaserScanRangeFilter  
+        params:
+          lower_replacement_value: .nan
+          upper_replacement_value: .nan
+          lower_bound: 0.05     # mínimo 5cm
+          upper_bound: 30.0     # máximo 30m para RPLidar S2

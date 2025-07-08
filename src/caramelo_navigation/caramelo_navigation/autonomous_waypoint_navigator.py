@@ -40,7 +40,7 @@ class WaypointNavigator(Node):
         # Declarar parâmetros
         self.declare_parameter('waypoints_file', '/home/work/Caramelo_workspace/src/caramelo_navigation/config/waypoints.json')
         self.declare_parameter('map_file', '/home/work/Caramelo_workspace/mapa_20250704_145039.yaml')
-        self.declare_parameter('use_sim_time', False)
+        # use_sim_time é declarado automaticamente pelo launch file
         
         # Configurações ajustáveis
         self.approach_distance = 0.25  # Distância para considerar "próximo" ao waypoint

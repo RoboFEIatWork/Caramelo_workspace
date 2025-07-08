@@ -1,43 +1,55 @@
 #!/usr/bin/env python3
 """
-Launch INTERATIVO - Sistema completo para posicionar robô e criar waypoints
+WAYPOINT CREATION LAUNCH - CARAMELO NAVIGATION
+==============================================
+
+Launch file interativo para criação de waypoints usando RViz e Nav2 poses.
+Baseado nas melhores práticas do tutorial Automatic Addison.
+
+Usage:
+    ros2 launch caramelo_navigation waypoint_creation.launch.py
+
+Features:
+- Map server com mapa pré-existente
+- Robot description para visualização
+- Interface interativa no RViz
+- Criação de waypoints via 2D Nav Goal
+- Exportação automática para waypoints.json
+
+Como usar:
+1. Execute o launch file
+2. Aguarde o RViz abrir
+3. Use "2D Pose Estimate" para posicionar o robô virtualmente
+4. Use "2D Nav Goal" para criar waypoints nomeados
+5. Os waypoints são salvos automaticamente em config/waypoints.json
+
+IMPORTANTE: Este é apenas para criação de waypoints, não para navegação real.
+Para navegação, use os launch files específicos do caramelo_navigation.
 """
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import TimerAction
-from launch.substitutions import Command
+from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    """
-    Launch INTERATIVO - Sistema completo para posicionar robô e criar waypoints
-    
-    INCLUI:
-    - Map server com o mapa
-    - Robot state publisher com o URDF do robô
-    - Interactive robot positioner (move o robô virtual)
-    - RViz configurado
-    
-    COMO USAR:
-    1. ros2 launch caramelo_navigation interactive_waypoint_creator.launch.py
-    2. Aguarde o RViz abrir
-    3. Use "2D Pose Estimate" para MOVER o robô virtual
-    4. Ajuste a posição até ficar satisfeito
-    5. Use "2D Nav Goal" para SALVAR o waypoint
-    6. Repita para criar mais waypoints!
-    """
     
     # Caminhos
     caramelo_nav_dir = get_package_share_directory('caramelo_navigation')
     caramelo_desc_dir = get_package_share_directory('caramelo_description')
     
-    # Arquivo do mapa
-    map_file = '/home/work/Caramelo_workspace/mapa_20250704_145039.yaml'
+    # Parâmetros
+    map_file = LaunchConfiguration('map_file')
+    
+    # Argumentos obrigatórios
+    declare_map_file_cmd = DeclareLaunchArgument(
+        'map_file',
+        description='OBRIGATÓRIO: Full path to map file (ex: $PWD/maps/ambiente_escritorio/map.yaml)')
     
     # URDF do robô
     urdf_file = os.path.join(caramelo_desc_dir, 'URDF', 'robot.urdf.xacro')
@@ -107,6 +119,7 @@ def generate_launch_description():
         package='caramelo_navigation',
         executable='interactive_robot_positioner',
         name='interactive_robot_positioner',
+        parameters=[{'map_file': map_file}],
         output='screen'
     )
     
@@ -127,6 +140,7 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
+        declare_map_file_cmd,
         map_server,
         lifecycle_manager,
         robot_state_publisher,

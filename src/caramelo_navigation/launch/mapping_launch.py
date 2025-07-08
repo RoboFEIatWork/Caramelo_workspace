@@ -105,8 +105,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         name='rviz2',
-        arguments=['-d', os.path.join(get_package_share_directory(package_name),
-                                      'rviz', 'mapping_view.rviz')],
+        arguments=['-d', os.path.join(get_package_share_directory('caramelo_bringup'), 'rviz', 'caramelo_navigation.rviz')],
         parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
     )

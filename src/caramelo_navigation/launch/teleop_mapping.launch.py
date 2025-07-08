@@ -25,7 +25,16 @@ def generate_launch_description():
        - a/d: esquerda/direita
        - q/e: rotação
     2. O mapa será construído automaticamente conforme você navega
-    3. Para salvar: ros2 run nav2_map_server map_saver_cli -f maps/teleop_map
+    
+    Para salvar o mapa (novo ambiente):
+    1. mkdir -p ~/Caramelo_workspace/maps/nome_ambiente
+    2. cd ~/Caramelo_workspace/maps/nome_ambiente
+    3. ros2 run nav2_map_server map_saver_cli -f map
+    
+    Exemplo:
+    mkdir -p ~/Caramelo_workspace/maps/laboratorio_fei
+    cd ~/Caramelo_workspace/maps/laboratorio_fei
+    ros2 run nav2_map_server map_saver_cli -f map
     """
     
     # Configurações

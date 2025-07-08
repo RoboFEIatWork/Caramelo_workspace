@@ -81,6 +81,13 @@ def generate_launch_description():
     declare_log_level_cmd = DeclareLaunchArgument(
         'log_level', default_value='info', description='log level')
 
+    declare_map_file_cmd = DeclareLaunchArgument(
+        'map_file',
+        description='OBRIGATÓRIO: Full path to map file for navigation (ex: $PWD/maps/ambiente_escritorio/map.yaml)')
+
+    # Map file parameter
+    map_file = LaunchConfiguration('map_file')
+
     # Especifica os nós composáveis
     composable_nodes = [
         ComposableNode(
@@ -123,6 +130,18 @@ def generate_launch_description():
             package='nav2_velocity_smoother',
             plugin='nav2_velocity_smoother::VelocitySmoother',
             name='velocity_smoother',
+            parameters=[configured_params],
+            remappings=remappings),
+        ComposableNode(
+            package='nav2_map_server',
+            plugin='nav2_map_server::MapServer',
+            name='map_server',
+            parameters=[configured_params, {'yaml_filename': map_file}],
+            remappings=remappings),
+        ComposableNode(
+            package='nav2_amcl',
+            plugin='nav2_amcl::AmclNode',
+            name='amcl',
             parameters=[configured_params],
             remappings=remappings),
     ]
@@ -247,6 +266,7 @@ def generate_launch_description():
     ld.add_action(declare_container_name_cmd)
     ld.add_action(declare_use_respawn_cmd)
     ld.add_action(declare_log_level_cmd)
+    ld.add_action(declare_map_file_cmd)
 
     # Adiciona ações
     ld.add_action(load_composable_nodes)

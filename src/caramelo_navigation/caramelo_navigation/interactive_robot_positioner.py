@@ -31,20 +31,22 @@ class InteractiveRobotPositioner(Node):
         # Contador de waypoints
         self.waypoint_count = 0
         
-        # Arquivo de waypoints - sempre salvar na pasta source
-        try:
-            # Tenta encontrar o diretório do pacote instalado
-            package_dir = get_package_share_directory('caramelo_navigation')
-            self.config_dir = os.path.join(package_dir, 'config')
-        except:
-            # Se não encontrar, usar a pasta src diretamente
-            self.config_dir = '/home/work/Caramelo_workspace/src/caramelo_navigation/config'
+        # Declarar parâmetro para o arquivo de mapa
+        self.declare_parameter('map_file', '')
+        map_file_path = self.get_parameter('map_file').get_parameter_value().string_value
         
-        # Sempre salvar na pasta source para persistir as alterações
-        self.source_config_dir = '/home/work/Caramelo_workspace/src/caramelo_navigation/config'
-        self.waypoints_file = os.path.join(self.source_config_dir, 'waypoints.json')
-        
-        # Subscriber para initial pose (2D Pose Estimate)
+        if map_file_path:
+            # Extrair diretório do mapa e definir arquivo de waypoints
+            map_dir = os.path.dirname(map_file_path)
+            self.waypoints_file = os.path.join(map_dir, 'waypoints.json')
+            self.get_logger().info(f"📁 Waypoints serão salvos em: {self.waypoints_file}")
+        else:
+            # Fallback para pasta source padrão
+            self.source_config_dir = '/home/work/Caramelo_workspace/src/caramelo_navigation/config'
+            self.waypoints_file = os.path.join(self.source_config_dir, 'waypoints.json')
+            self.get_logger().warn(f"⚠️ Parâmetro map_file não fornecido. Usando: {self.waypoints_file}")
+            
+        self.get_logger().info(f"📁 Waypoints salvos em: {self.waypoints_file}")
         self.initial_pose_sub = self.create_subscription(
             PoseWithCovarianceStamped,
             '/initialpose',
@@ -208,16 +210,8 @@ class InteractiveRobotPositioner(Node):
         os.makedirs(os.path.dirname(self.waypoints_file), exist_ok=True)
         with open(self.waypoints_file, 'w') as f:
             json.dump(data, f, indent=2)
-            
-        # Também salvar na pasta install se existir
-        try:
-            install_waypoints_file = os.path.join(self.config_dir, 'waypoints.json')
-            if install_waypoints_file != self.waypoints_file:
-                os.makedirs(os.path.dirname(install_waypoints_file), exist_ok=True)
-                with open(install_waypoints_file, 'w') as f:
-                    json.dump(data, f, indent=2)
-        except:
-            pass
+        
+        self.get_logger().info(f"💾 Waypoint '{waypoint['name']}' salvo em {self.waypoints_file}")
             
     def count_ws_waypoints(self):
         """Conta quantos waypoints WS existem no arquivo"""

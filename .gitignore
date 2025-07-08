@@ -48,3 +48,11 @@ venv/
 # === Misc ===
 *.egg-info/
 __pycache__/
+prompt.md
+
+# === Documentation Policy ===
+# Only README.md in root is allowed - all documentation must be centralized
+*/README.md
+**/README.md
+ESTRUTURA_*.md
+TUTORIAL_*.md

@@ -2,24 +2,21 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
     """
-    Launch para inicializar apenas o RViz para visualização.
+    Launch para visualização básica sem mapa - apenas LIDAR e robot model.
     
     Responsabilidades:
-    - Inicializar RViz com configuração específica do Caramelo
-    - Configuração para visualizar:
-    - Robot model
-    - Laser scan
-    - Odometria
-    - TF tree
+    - Inicializar RViz com Fixed Frame = odom
+    - Visualizar robot model, laser scan, TF
+    - Sem componentes de navegação/mapa
     """
     
     # Argumentos de launch
@@ -30,13 +27,17 @@ def generate_launch_description():
         default_value='false',
         description='Usar tempo de simulação')
     
-    # Nó do RViz
+    # Nó do RViz - Config básico
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
         output='screen',
-        arguments=['-d', os.path.join(get_package_share_directory('caramelo_bringup'), 'rviz', 'caramelo_basic_visualization.rviz')],
+        arguments=['-d', PathJoinSubstitution([
+            FindPackageShare('caramelo_bringup'),
+            'rviz', 
+            'caramelo_basic.rviz'
+        ])],
         parameters=[{
             'use_sim_time': use_sim_time
         }]
