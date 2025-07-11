@@ -44,24 +44,6 @@ def generate_launch_description():
         respawn=True
     )
     
-    # ===============================================
-    # 3. Base Footprint TF Publisher - REMOVIDO
-    # ===============================================
-    # A transformação base_footprint -> base_link já está definida no URDF
-    # através do joint "base_joint", não precisa de static transform publisher
-    
-    # Opção 2: Usando nó customizado (comentado - use se precisar de funcionalidades avançadas)
-    # odom_tf_publisher = Node(
-    #     package='caramelo_bringup',
-    #     executable='odom_tf_publisher_node',
-    #     name='odom_tf_publisher',
-    #     output='screen',
-    #     parameters=[
-    #         PathJoinSubstitution([caramelo_bringup_path, "config", "odom_tf_config.yaml"]),
-    #         {'use_sim_time': use_sim_time}
-    #     ],
-    #     respawn=True
-    # )
     
     # ===============================================
     # 4. Encoder Node (Odometria real)

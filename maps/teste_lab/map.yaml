@@ -1,4 +1,4 @@
-image: /home/work/Caramelo_workspace/maps/arena_fei/map.pgm
+image: map.pgm
 mode: trinary
 resolution: 0.02
 origin: [-3.88, -3.92, 0]

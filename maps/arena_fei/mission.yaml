@@ -1,0 +1,23 @@
+# Missão Caramelo - Arena FEI
+# Arquivo de missão para navegação autônoma
+# Referencia waypoints definidos em waypoints.json
+
+mission:
+  name: "missao_arena_fei"
+  description: "Navegação pelos workspaces da arena FEI"
+  waypoint_sequence:
+    - "START"      # Ponto inicial (0,0)
+    - "WS01"       # Workspace 1 
+    - "WS02"       # Workspace 2
+    - "FINISH"     # Retorno ao ponto final (0,0)
+  
+  # Configurações da missão
+  loop: false                    # Executar apenas uma vez
+  wait_time_between_goals: 2.0   # Tempo de espera entre waypoints (segundos)
+  timeout_per_goal: 60.0         # Timeout por waypoint (segundos)
+  
+# Informações da missão
+mission_info:
+  total_waypoints: 4
+  estimated_time: "5 minutos"
+  frame_id: "map"

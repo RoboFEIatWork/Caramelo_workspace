@@ -7,32 +7,34 @@ Launch file interativo para criação de waypoints usando RViz e Nav2 poses.
 Baseado nas melhores práticas do tutorial Automatic Addison.
 
 Usage:
-    ros2 launch caramelo_navigation waypoint_creation.launch.py
+    ros2 launch caramelo_navigation waypoint_creation.launch.py map_folder:=maps/arena_fei
 
 Features:
 - Map server com mapa pré-existente
 - Robot description para visualização
 - Interface interativa no RViz
 - Criação de waypoints via 2D Nav Goal
-- Exportação automática para waypoints.json
+- Exportação automática para waypoints.json na pasta do mapa
 
 Como usar:
 1. Execute o launch file
 2. Aguarde o RViz abrir
 3. Use "2D Pose Estimate" para posicionar o robô virtualmente
 4. Use "2D Nav Goal" para criar waypoints nomeados
-5. Os waypoints são salvos automaticamente em config/waypoints.json
+5. Os waypoints são salvos automaticamente em [map_folder]/waypoints.json
 
 IMPORTANTE: Este é apenas para criação de waypoints, não para navegação real.
 Para navegação, use os launch files específicos do caramelo_navigation.
 """
 
 import os
+from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
-from launch.substitutions import Command, LaunchConfiguration
+from launch.substitutions import (Command, LaunchConfiguration,
+                                  PathJoinSubstitution)
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -44,12 +46,12 @@ def generate_launch_description():
     caramelo_desc_dir = get_package_share_directory('caramelo_description')
     
     # Parâmetros
-    map_file = LaunchConfiguration('map_file')
+    map_folder = LaunchConfiguration('map_folder')
     
     # Argumentos obrigatórios
-    declare_map_file_cmd = DeclareLaunchArgument(
-        'map_file',
-        description='OBRIGATÓRIO: Full path to map file (ex: $PWD/maps/ambiente_escritorio/map.yaml)')
+    declare_map_folder_cmd = DeclareLaunchArgument(
+        'map_folder',
+        description='OBRIGATÓRIO: Path to map folder (ex: maps/arena_fei). Files map.yaml and map.pgm must exist inside.')
     
     # URDF do robô
     urdf_file = os.path.join(caramelo_desc_dir, 'URDF', 'robot.urdf.xacro')
@@ -58,13 +60,19 @@ def generate_launch_description():
         value_type=str
     )
     
+    # Construir caminho completo para o arquivo map.yaml usando PathJoinSubstitution
+    map_file_path = PathJoinSubstitution([
+        map_folder,
+        'map.yaml'
+    ])
+    
     # 1. Map server
     map_server = Node(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
         parameters=[{
-            'yaml_filename': map_file,
+            'yaml_filename': map_file_path,
             'use_sim_time': False
         }],
         output='screen'
@@ -119,7 +127,10 @@ def generate_launch_description():
         package='caramelo_navigation',
         executable='interactive_robot_positioner',
         name='interactive_robot_positioner',
-        parameters=[{'map_file': map_file}],
+        parameters=[{
+            'map_file': map_file_path,
+            'map_folder': map_folder
+        }],
         output='screen'
     )
     
@@ -140,7 +151,7 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
-        declare_map_file_cmd,
+        declare_map_folder_cmd,
         map_server,
         lifecycle_manager,
         robot_state_publisher,

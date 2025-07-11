@@ -104,38 +104,24 @@ class AutonomousWaypointNavigator(Node):
         if not self.waypoints:
             self.get_logger().warn('Nenhum waypoint para navegar')
             return
+            
         self.get_logger().info(f'Iniciando navegação por {len(self.waypoints)} waypoints...')
-
-        # Delay para garantir que AMCL e TF estejam prontos
-        self.get_logger().info('Aguardando 3s para AMCL/TF...')
-        time.sleep(3.0)
-
-        # Definir pose inicial próximo do primeiro waypoint
+        
+        # Definir pose inicial (posição atual do robô)
         initial_pose = PoseStamped()
         initial_pose.header.frame_id = 'map'
         initial_pose.header.stamp = self.navigator.get_clock().now().to_msg()
-        if self.waypoints:
-            initial_pose.pose.position.x = self.waypoints[0].pose.position.x
-            initial_pose.pose.position.y = self.waypoints[0].pose.position.y
-            initial_pose.pose.position.z = 0.0
-            initial_pose.pose.orientation = self.waypoints[0].pose.orientation
-        else:
-            initial_pose.pose.position.x = 0.0
-            initial_pose.pose.position.y = 0.0
-            initial_pose.pose.position.z = 0.0
-            initial_pose.pose.orientation.x = 0.0
-            initial_pose.pose.orientation.y = 0.0
-            initial_pose.pose.orientation.z = 0.0
-            initial_pose.pose.orientation.w = 1.0
-
-        self.get_logger().info('Publicando initial pose para AMCL...')
+        initial_pose.pose.position.x = 0.0  # Robô inicia na origem
+        initial_pose.pose.position.y = 0.0
+        initial_pose.pose.position.z = 0.0
+        initial_pose.pose.orientation.x = 0.0
+        initial_pose.pose.orientation.y = 0.0
+        initial_pose.pose.orientation.z = 0.0
+        initial_pose.pose.orientation.w = 1.0
+        
+        # Definir pose inicial no AMCL
         self.navigator.setInitialPose(initial_pose)
-
-        # Esperar confirmação do AMCL
-        self.get_logger().info('Aguardando amcl_pose...')
-        self.navigator.waitUntilNav2Active()
-        time.sleep(1.0)
-
+        
         # Iniciar navegação sequencial pelos waypoints
         self.navigate_waypoints()
     

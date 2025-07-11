@@ -19,19 +19,15 @@ def generate_launch_description():
     # Argumentos do launch
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     
-    # Filtro para delimitar ângulo do laser (180° frontal)
-    laser_filter_node = Node(
-        package='laser_filters',
-        executable='scan_to_scan_filter_chain',
-        name='laser_filter',
+    # Filtro Python para limitar ângulo e ignorar pontos < 0.2m
+    laser_scan_filter_node = Node(
+        package='caramelo_navigation',
+        executable='laser_scan_filter',
+        name='laser_scan_filter',
         output='screen',
-        parameters=[{
-            'filter_config_file': '/home/work/Caramelo_workspace/src/caramelo_bringup/config/laser_filter_config.yaml',
-            'use_sim_time': use_sim_time
-        }],
         remappings=[
-            ('scan', 'scan_raw'),           # Input: scan bruto do RPLidar
-            ('scan_filtered', '/scan')      # Output: scan filtrado para navegação
+            ('/scan_raw', 'scan_raw'),   # Input: scan bruto do RPLidar
+            ('/scan', '/scan')           # Output: scan filtrado para navegação
         ]
     )
     
@@ -43,7 +39,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'channel_type': 'serial',                # Tipo de canal
-            'serial_port': '/dev/ttyUSB2',           # LIDAR sempre na porta USB2
+            'serial_port': '/dev/ttyUSB2',           # LIDAR na porta USB2
             'serial_baudrate': 1000000,              # Baudrate correto para S2 (1M)
             'frame_id': 'laser_frame',               # Frame do LIDAR no TF tree
             'inverted': True,                        # IMPORTANTE: inverted=true para S2
@@ -64,5 +60,5 @@ def generate_launch_description():
         ),
         
         rplidar_node,
-        laser_filter_node
+        laser_scan_filter_node
     ])
