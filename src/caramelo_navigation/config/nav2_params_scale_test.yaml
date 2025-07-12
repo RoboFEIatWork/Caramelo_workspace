@@ -1,0 +1,178 @@
+# Configuração de navegação simples para teste de escala
+# Remove componentes que podem causar problemas de sincronização
+
+# === SINCRONIZAÇÃO GLOBAL ===
+# Configurações para melhorar sincronização entre sensores
+use_sim_time: false
+
+# === PARÂMETROS DE TOLERÂNCIA TEMPORAL ===
+# Aumenta tolerância para evitar "queue is full"
+transform_tolerance: 2.0          # Dobra tolerância padrão
+expected_update_rate: 5.0         # Frequência esperada de updates (Hz)
+
+# === MESSAGE FILTER CONFIGURATION ===
+# Configurações específicas para evitar queue overflow
+message_timeout: 1.0              # Timeout para mensagens antigas
+queue_size: 100                   # Buffer maior para mensagens
+message_filter_target_frame: "map"  # Frame alvo para filtros
+
+# === AMCL CONFIGURAÇÕES BÁSICAS ===
+amcl:
+  ros__parameters:
+    use_sim_time: false
+    
+    # === REDUÇÃO DE PROCESSAMENTO ===
+    max_particles: 1000           # Reduzido para melhor performance
+    min_particles: 200            # Reduzido para melhor performance
+    
+    # === TOLERÂNCIAS TEMPORAIS ===
+    transform_tolerance: 2.0      # Maior tolerância
+    update_min_d: 0.3             # Atualizar menos frequentemente  
+    update_min_a: 0.3             # Atualizar menos frequentemente
+    
+    # === CONFIGURAÇÕES LASER ===
+    laser_max_range: 30.0         # Alcance do RPLidar S2
+    laser_min_range: 0.1          # Mínimo para evitar noise
+    max_beams: 30                 # Reduzido para menos processamento
+    
+    # === MOVIMENTO PARA MECANUM ===
+    robot_model_type: "nav2_amcl::OmniMotionModel"
+    alpha1: 0.4  # Maior tolerância para mecanum
+    alpha2: 0.4 
+    alpha3: 0.4
+    alpha4: 0.4
+    
+    # === FRAMES ===
+    base_frame_id: "base_footprint"
+    global_frame_id: "map"
+    odom_frame_id: "odom"
+    
+    # === CONFIGURAÇÕES CONSERVADORAS ===
+    resample_interval: 2          # Menos resampling
+    recovery_alpha_slow: 0.001
+    recovery_alpha_fast: 0.1
+    
+    # === POSE INICIAL ===
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+# === CONTROLLER CONFIGURAÇÕES ===
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 8.0     # Mantém 8Hz como estava funcionando
+    
+    # === TOLERÂNCIAS ===
+    transform_tolerance: 2.0
+    
+    # === LOCAL COSTMAP OTIMIZADO ===
+    local_costmap:
+      # Configurações básicas para teste
+      update_frequency: 3.0       # Reduzido para menos processamento
+      publish_frequency: 2.0      # Reduzido para menos processamento
+      transform_tolerance: 2.0    # Maior tolerância
+      
+      # === REDUÇÃO DE ÁREA ===
+      width: 4                    # Reduzido de 6 para 4 metros
+      height: 4                   # Reduzido de 6 para 4 metros
+      resolution: 0.05            # Menos resolução para teste
+      
+      # === FILTROS PARA SINCRONIZAÇÃO ===
+      observation_sources: scan
+      scan:
+        topic: /scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+        raytrace_max_range: 15.0  # Reduzido do RPLidar
+        raytrace_min_range: 0.1
+        obstacle_max_range: 12.0  # Reduzido do RPLidar
+        obstacle_min_range: 0.1
+        
+        # === CONFIGURAÇÕES DE BUFFER ===
+        observation_persistence: 0.5  # Menos persistência
+        expected_update_rate: 5.0      # Mesma frequência esperada
+        inf_is_valid: false
+        
+# === PLANNER CONFIGURAÇÕES ===  
+planner_server:
+  ros__parameters:
+    use_sim_time: false
+    planner_plugins: ["GridBased"]
+    
+    # === TOLERÂNCIAS ===
+    transform_tolerance: 2.0
+    
+    # === GLOBAL COSTMAP OTIMIZADO ===
+    global_costmap:
+      update_frequency: 1.0       # Muito reduzido para teste
+      publish_frequency: 1.0      # Muito reduzido para teste
+      transform_tolerance: 2.0    # Maior tolerância
+      
+      # === USA MAPA ESTÁTICO ===
+      global_frame: map
+      robot_base_frame: base_footprint
+      use_sim_time: false
+      resolution: 0.02            # Mantém resolução do mapa
+      
+      # === PLUGINS BÁSICOS ===
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      
+      # Configurações específicas para evitar problemas
+      obstacle_layer:
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 15.0
+          obstacle_max_range: 12.0
+          inf_is_valid: false
+          
+          # === CONFIGURAÇÕES DE SINCRONIZAÇÃO ===
+          observation_persistence: 1.0    # Maior persistência para estabilidade
+          expected_update_rate: 5.0       # Frequência esperada
+        
+      inflation_layer:
+        enabled: true
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.5     # Reduzido para teste
+
+# === BEHAVIOR TREE NAVIGATOR ===
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    transform_tolerance: 2.0
+    global_frame: map
+    robot_base_frame: base_footprint
+    odom_topic: /odom
+    
+# === MAP SERVER ===
+map_server:
+  ros__parameters:
+    use_sim_time: false
+    yaml_filename: "/home/work/Caramelo_workspace/maps/arena_fei/map.yaml"
+
+# === WAYPOINT FOLLOWER ===
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: false
+    loop_rate: 20
+    stop_on_failure: false
+    action_server_result_timeout: 900.0
+
+# === BEHAVIOR SERVER ===
+behavior_server:
+  ros__parameters:
+    use_sim_time: false
+    transform_tolerance: 2.0
+    global_frame: map
+    robot_base_frame: base_footprint

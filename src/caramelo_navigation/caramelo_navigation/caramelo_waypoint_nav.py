@@ -62,6 +62,23 @@ class CarameloWaypointNav(Node):
         self.current_waypoint = 0
         self.mission_active = False
         self.amcl_ready = False
+        self.localization_corrected = False  # Flag para correção de localização
+        self.initial_pose_verified = False   # Flag para verificação de pose inicial
+        
+        # Publisher para pose inicial (correção automática)
+        self.pose_publisher = self.create_publisher(
+            PoseWithCovarianceStamped,
+            '/initialpose',
+            10
+        )
+        
+        # Subscriber para pose atual do AMCL
+        self.pose_subscriber = self.create_subscription(
+            PoseWithCovarianceStamped,
+            '/amcl_pose',
+            self.pose_callback,
+            10
+        )
         
         self.get_logger().info("🤖 CARAMELO WAYPOINT NAVIGATION iniciado!")
         
@@ -194,7 +211,7 @@ class CarameloWaypointNav(Node):
         self.get_logger().info(f"✅ Missão padrão criada em: {self.mission_file}")
         
     def initialize_navigation(self):
-        """Inicializa a navegação - publica pose inicial"""
+        """Inicializa a navegação com correção automática de localização"""
         self.init_timer.cancel()
         
         # Aguarda Nav2 estar pronto
@@ -204,13 +221,21 @@ class CarameloWaypointNav(Node):
             
         self.get_logger().info("✅ Nav2 conectado!")
         
-        # Publica pose inicial (se habilitado)
-        if self.publish_pose:
-            self.publish_initial_pose_func()
+        # NOVO SISTEMA: Correção automática de localização
+        self.get_logger().info("🔍 Iniciando verificação e correção automática de localização...")
+        self.get_logger().info("📍 Verificando se robô está na posição inicial (0,0,0)...")
         
-        # Aguarda um pouco e inicia missão
-        if self.auto_start and self.waypoints:
-            self.create_timer(3.0, self.start_mission_callback)
+        # Publica pose inicial de referência para AMCL
+        self.correct_initial_pose()
+        
+        # Sistema aguardará automaticamente via pose_callback
+        if not self.auto_start:
+            self.get_logger().info("🔄 Auto-start desabilitado. Use RViz para iniciar manualmente.")
+            
+    def check_localization_and_start(self):
+        """Método legado - substituído pelo sistema automático"""
+        # Este método não é mais usado - a lógica foi movida para pose_callback
+        pass
             
     def publish_initial_pose_func(self):
         """Publica pose inicial para AMCL"""
@@ -237,7 +262,6 @@ class CarameloWaypointNav(Node):
         
         self.initial_pose_pub.publish(initial_pose)
         self.get_logger().info("📍 Pose inicial publicada para AMCL")
-        
     def start_mission_callback(self):
         """Callback para iniciar missão"""
         self.start_mission()
@@ -256,6 +280,12 @@ class CarameloWaypointNav(Node):
         
     def navigate_to_next_waypoint(self):
         """Navega para o próximo waypoint"""
+        # Verificações de segurança
+        if not self.waypoints:
+            self.get_logger().warn("⚠️ Lista de waypoints está vazia!")
+            self.mission_active = False
+            return
+            
         if self.current_waypoint >= len(self.waypoints):
             self.get_logger().info("✅ Missão completa! Todos os waypoints visitados.")
             self.mission_active = False
@@ -309,6 +339,11 @@ class CarameloWaypointNav(Node):
         if not goal_handle.accepted:
             self.get_logger().error("❌ Goal rejeitado pelo Nav2!")
             return
+        
+        # Verificar bounds ANTES de acessar waypoints
+        if self.current_waypoint >= len(self.waypoints):
+            self.get_logger().warn(f"⚠️ Índice de waypoint fora de range: {self.current_waypoint}/{len(self.waypoints)}")
+            return
             
         wp_name = self.waypoints[self.current_waypoint].get('name', f'WP{self.current_waypoint + 1}')
         self.get_logger().info(f"✅ Goal aceito para '{wp_name}'")
@@ -321,20 +356,44 @@ class CarameloWaypointNav(Node):
         """Callback de resultado da navegação"""
         result = future.result().result
         
+        # Verificar bounds ANTES de acessar waypoints
+        if self.current_waypoint >= len(self.waypoints):
+            self.get_logger().warn(f"⚠️ Índice de waypoint fora de range: {self.current_waypoint}/{len(self.waypoints)}")
+            return
+            
         wp_name = self.waypoints[self.current_waypoint].get('name', f'WP{self.current_waypoint + 1}')
         
         if result:
             self.get_logger().info(f"🎉 '{wp_name}' alcançado com sucesso!")
             
-            # Próximo waypoint
-            self.current_waypoint += 1
-            
-            # Pequena pausa entre waypoints
-            self.create_timer(2.0, self.navigate_to_next_waypoint_delayed)
+            # ⭐ NOVA FEATURE: Espera de 20 segundos no waypoint
+            self.get_logger().info(f"⏳ Aguardando 20 segundos no waypoint '{wp_name}'...")
+            self.create_timer(20.0, self.wait_complete_callback)
             
         else:
             self.get_logger().error(f"❌ Falha ao alcançar '{wp_name}'")
             self.mission_active = False
+            
+    def wait_complete_callback(self):
+        """Callback chamado após espera no waypoint"""
+        if self.current_waypoint >= len(self.waypoints):
+            return
+            
+        wp_name = self.waypoints[self.current_waypoint].get('name', f'WP{self.current_waypoint + 1}')
+        self.get_logger().info(f"✅ Espera completa no waypoint '{wp_name}'. Próximo destino...")
+        
+        # Próximo waypoint
+        self.current_waypoint += 1
+        
+        # Verificar se há mais waypoints
+        if self.current_waypoint >= len(self.waypoints):
+            self.get_logger().info("🏁 MISSÃO COMPLETA! Todos os waypoints visitados com sucesso.")
+            self.get_logger().info("🔄 Sistema permanece ativo. Para nova missão, reinicie o node.")
+            self.mission_active = False
+            return
+        
+        # Pequena pausa antes do próximo waypoint
+        self.create_timer(2.0, self.navigate_to_next_waypoint_delayed)
             
     def navigate_to_next_waypoint_delayed(self):
         """Navega para próximo waypoint com delay"""
@@ -346,7 +405,7 @@ class CarameloWaypointNav(Node):
         try:
             # Tentar obter transform de map para base_footprint
             transform = self.tf_buffer.lookup_transform(
-                'map', 'base_footprint', rclpy.time.Time()
+                'map', 'base_footprint', Time()
             )
             
             # Se chegou aqui, o transform existe
@@ -361,17 +420,109 @@ class CarameloWaypointNav(Node):
                 self.amcl_ready = False
             return False
     
+    def pose_callback(self, msg):
+        """Callback para receber pose atual do AMCL"""
+        if not self.initial_pose_verified and not self.mission_active:
+            # Verifica se a pose está próxima da origem (START)
+            current_x = msg.pose.pose.position.x
+            current_y = msg.pose.pose.position.y
+            
+            # Tolerância para considerar que está na origem
+            tolerance = 0.3  # 30cm
+            
+            if abs(current_x) < tolerance and abs(current_y) < tolerance:
+                self.get_logger().info(f"✅ Pose inicial verificada: ({current_x:.3f}, {current_y:.3f})")
+                self.initial_pose_verified = True
+                
+                # Se já fez correção de localização, pode iniciar missão
+                if self.localization_corrected:
+                    self.start_mission_after_localization()
+            else:
+                self.get_logger().warn(f"⚠️ Pose atual ({current_x:.3f}, {current_y:.3f}) não está na origem!")
+                # Automaticamente corrige a pose para (0,0,0)
+                self.correct_initial_pose()
+    
+    def correct_initial_pose(self):
+        """Corrige automaticamente a pose inicial para (0,0,0)"""
+        if self.localization_corrected:
+            return  # Já foi corrigida
+            
+        self.get_logger().info("🔧 Corrigindo pose inicial automaticamente...")
+        
+        # Publica pose inicial corrigida para (0,0,0)
+        pose_msg = PoseWithCovarianceStamped()
+        pose_msg.header.stamp = self.get_clock().now().to_msg()
+        pose_msg.header.frame_id = 'map'
+        
+        # Pose na origem
+        pose_msg.pose.pose.position.x = 0.0
+        pose_msg.pose.pose.position.y = 0.0
+        pose_msg.pose.pose.position.z = 0.0
+        pose_msg.pose.pose.orientation.x = 0.0
+        pose_msg.pose.pose.orientation.y = 0.0
+        pose_msg.pose.pose.orientation.z = 0.0
+        pose_msg.pose.pose.orientation.w = 1.0
+        
+        # Matriz de covariância (confiança moderada)
+        covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.25, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0685]
+        pose_msg.pose.covariance = covariance
+        
+        # Publica correção
+        self.pose_publisher.publish(pose_msg)
+        self.get_logger().info("📍 Pose inicial corrigida para (0.0, 0.0, 0.0)")
+        
+        self.localization_corrected = True
+        
+        # Aguarda um pouco para AMCL processar a correção, depois verifica localização
+        self.verification_timer = self.create_timer(2.0, self.verify_localization_correction)
+    
+    def verify_localization_correction(self):
+        """Verifica se a correção de localização foi aplicada"""
+        self.get_logger().info("🔍 Verificando correção de localização...")
+        
+        # Cancela o timer para não repetir
+        if hasattr(self, 'verification_timer'):
+            self.verification_timer.cancel()
+            self.verification_timer.destroy()
+        
+        # A verificação será feita no próximo callback de pose
+        # Se ainda não verificou, agenda uma nova verificação única
+        if not self.initial_pose_verified:
+            self.verification_timer = self.create_timer(2.0, self.verify_localization_correction)
+    
+    def start_mission_after_localization(self):
+        """Inicia a missão após correção e verificação de localização"""
+        if self.initial_pose_verified and self.localization_corrected:
+            self.get_logger().info("🚀 Localização verificada! Iniciando navegação...")
+            
+            # Remove waypoint START se for o primeiro (robô já está lá)
+            if self.waypoints and self.waypoints[0].get('name', '').upper() == 'START':
+                removed_wp = self.waypoints.pop(0)
+                self.get_logger().info(f"⏭️ Pulando waypoint '{removed_wp['name']}' (posição inicial)")
+                
+            # Inicia navegação pelos waypoints restantes
+            if self.waypoints:
+                self.start_mission()
+            else:
+                self.get_logger().warn("⚠️ Nenhum waypoint para navegar após remoção do START")
+    
 def main(args=None):
+    """Função principal para iniciar o node de navegação por waypoints"""
     rclpy.init(args=args)
     
-    navigator = CarameloWaypointNav()
-    
     try:
-        rclpy.spin(navigator)
+        node = CarameloWaypointNav()
+        rclpy.spin(node)
     except KeyboardInterrupt:
-        navigator.get_logger().info("🛑 Navegação interrompida pelo usuário")
+        pass
+    except Exception as e:
+        print(f"Erro durante execução: {e}")
     finally:
-        navigator.destroy_node()
         rclpy.shutdown()
 
 

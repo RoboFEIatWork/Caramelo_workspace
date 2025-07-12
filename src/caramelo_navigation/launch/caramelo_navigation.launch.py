@@ -67,6 +67,26 @@ def generate_launch_description():
         }]
     )
     
+    # 1.5. EKF para fusão sensorial (DESABILITADO temporariamente)
+    # ekf_node = Node(
+    #     package='robot_localization',
+    #     executable='ekf_node',
+    #     name='ekf_filter_node',
+    #     output='screen',
+    #     parameters=[os.path.join(pkg_nav, 'config', 'ekf_params.yaml'),
+    #                {'use_sim_time': use_sim_time}]
+    # )
+    
+    # 1.6. SLAM Toolbox para scan matching (DESABILITADO temporariamente)
+    # slam_toolbox_node = Node(
+    #     package='slam_toolbox',
+    #     executable='async_slam_toolbox_node',
+    #     name='slam_toolbox',
+    #     output='screen',
+    #     parameters=[os.path.join(pkg_nav, 'config', 'slam_params.yaml'),
+    #                {'use_sim_time': use_sim_time}]
+    # )
+    
     # 2. Map Server (carrega mapa estático)
     map_server_node = Node(
         package='nav2_map_server',
@@ -101,6 +121,15 @@ def generate_launch_description():
         package='nav2_planner',
         executable='planner_server',
         name='planner_server',
+        output='screen',
+        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+    )
+    
+    # 5.5. Nav2 Smoother Server
+    smoother_server_node = Node(
+        package='nav2_smoother',
+        executable='smoother_server',
+        name='smoother_server',
         output='screen',
         parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
     )
@@ -145,6 +174,7 @@ def generate_launch_description():
                 'amcl',
                 'controller_server',
                 'planner_server',
+                'smoother_server',
                 'behavior_server',
                 'bt_navigator',
                 'waypoint_follower'
@@ -251,12 +281,15 @@ def generate_launch_description():
         amcl_ready_log,
         waypoint_ready_log,
         
-        # Nodes essenciais (imediatos)
+        # Nodes essenciais - NAVEGAÇÃO BÁSICA SIMPLIFICADA
+        # ekf_node,                    # EKF DESABILITADO temporariamente
+        # slam_toolbox_node,           # SLAM DESABILITADO temporariamente
         twist_converter_node,
         map_server_node,
         amcl_node,
         controller_server_node,
         planner_server_node,
+        smoother_server_node,        # Smoother para suavizar trajetórias
         behavior_server_node,
         bt_navigator_node,
         waypoint_follower_node,

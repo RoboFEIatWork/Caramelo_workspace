@@ -14,12 +14,11 @@ slam_toolbox:
     map_frame: map
     base_frame: base_footprint
     scan_topic: /scan
-    mode: mapping #localization
+    mode: localization #MUDANÇA: usar localização para navegação com mapa existente
     
-    # CONFIGURAÇÃO HÍBRIDA: Scan matching moderado para alinhamento de paredes
-    # mas SEM correção drástica da odometria
+    # CONFIGURAÇÃO PARA FUSÃO SENSORIAL: Scan matching DESABILITADO temporariamente
     publish_odom_tf: false  # Encoder publica TF odom->base_footprint
-    publish_scan_match_odom: false  # NÃO sobrescrever odometria dos encoders
+    publish_scan_match_odom: false  # DESABILITADO: problemas de frame
     
     debug_logging: false
     
@@ -37,17 +36,17 @@ slam_toolbox:
     enable_interactive_mode: true
     use_response_expansion: true
 
-    # === SCAN MATCHING OTIMIZADO PARA RPLIDAR S2 ===
+    # === SCAN MATCHING OTIMIZADO PARA CORREÇÃO DE ODOMETRIA ===
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.2    # 20cm - atualização frequente
-    minimum_travel_heading: 0.2     # ~11° - atualização frequente
-    scan_buffer_size: 10            # Buffer maior para melhor matching
+    minimum_travel_distance: 0.1    # 10cm - atualização MUITO frequente para corrigir odometria
+    minimum_travel_heading: 0.1     # ~6° - atualização MUITO frequente
+    scan_buffer_size: 15            # Buffer maior para melhor correção
     scan_buffer_maximum_scan_distance: 30.0  # Alcance máximo RPLidar S2
-    link_match_minimum_response_fine: 0.5    # Aceita matches razoáveis
-    link_scan_maximum_distance: 1.0          # Correções locais normais
-    loop_search_maximum_distance: 3.0        # Loop closure normal
-    do_loop_closing: true                    # HABILITADO para melhor mapa
+    link_match_minimum_response_fine: 0.3    # Aceita mais matches para correção
+    link_scan_maximum_distance: 0.8          # Correções locais mais agressivas
+    loop_search_maximum_distance: 2.0        # Loop closure mais restritivo
+    do_loop_closing: true                    # HABILITADO para melhor localização
     loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 0.8
     loop_match_minimum_response_coarse: 0.5
