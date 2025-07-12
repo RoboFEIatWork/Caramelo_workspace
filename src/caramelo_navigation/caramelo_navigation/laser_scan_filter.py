@@ -30,14 +30,14 @@ class LaserScanFilter(Node):
         self.get_logger().info('🔍 Filtro de LIDAR iniciado: 90° a 270°')
         
     def scan_callback(self, msg):
-        """Filtra o scan para usar apenas 90° a 270° e ignora pontos < 0.25m (define como infinito)"""
+        """Filtra o scan para usar apenas 90° a 270° e ignora pontos < 0.05m (define como infinito)"""
         if not msg.ranges:
             return
         
         total_points = len(msg.ranges)
         start_idx = int(total_points * 0.25)  # 90°
         end_idx = int(total_points * 0.75)    # 270°
-        min_dist = 0.25  # 25cm
+        min_dist = 0.05  # 5cm
         
         filtered_msg = LaserScan()
         filtered_msg.header = msg.header
@@ -60,7 +60,7 @@ class LaserScanFilter(Node):
         
         if not hasattr(self, '_logged'):
             self._logged = True
-            self.get_logger().info(f'🔍 Filtro ativo: ignorando {start_idx} pontos iniciais e {total_points-end_idx} finais, e todos < 0.25m')
+            self.get_logger().info(f'🔍 Filtro ativo: ignorando {start_idx} pontos iniciais e {total_points-end_idx} finais, e todos < 0.05m')
             self.get_logger().info(f'   Setor útil: índices {start_idx} a {end_idx}')
         
         self.publisher.publish(filtered_msg)

@@ -17,12 +17,14 @@ import os
 import time
 
 import rclpy
+import tf2_ros
 import yaml
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.duration import Duration
 from rclpy.node import Node
+from rclpy.time import Time
 
 
 class CarameloWaypointNav(Node):
@@ -50,11 +52,16 @@ class CarameloWaypointNav(Node):
         # Action Client para navegação
         self.nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
         
+        # TF Buffer para verificar transforms
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        
         # Variáveis
         self.waypoints = []         # Lista final de waypoints para navegação
         self.waypoints_db = {}      # Database de waypoints por nome (se disponível)
         self.current_waypoint = 0
         self.mission_active = False
+        self.amcl_ready = False
         
         self.get_logger().info("🤖 CARAMELO WAYPOINT NAVIGATION iniciado!")
         
@@ -120,6 +127,11 @@ class CarameloWaypointNav(Node):
         self.waypoints = []
         
         for wp_name in waypoint_sequence:
+            # ⚠️ PULAR WAYPOINT "START" - é apenas pose inicial
+            if wp_name.upper() == 'START':
+                self.get_logger().info(f"⏭️  Pulando waypoint '{wp_name}' (pose inicial)")
+                continue
+                
             if wp_name in self.waypoints_db:
                 wp_data = self.waypoints_db[wp_name]
                 pos = wp_data['position']
@@ -328,8 +340,27 @@ class CarameloWaypointNav(Node):
         """Navega para próximo waypoint com delay"""
         if self.mission_active:
             self.navigate_to_next_waypoint()
-
-
+    
+    def check_amcl_ready(self):
+        """Verifica se o AMCL está pronto checando o transform map->base_footprint"""
+        try:
+            # Tentar obter transform de map para base_footprint
+            transform = self.tf_buffer.lookup_transform(
+                'map', 'base_footprint', rclpy.time.Time()
+            )
+            
+            # Se chegou aqui, o transform existe
+            if not self.amcl_ready:
+                self.get_logger().info("✅ AMCL está pronto! Transform map->base_footprint disponível")
+                self.amcl_ready = True
+            return True
+            
+        except Exception as e:
+            if self.amcl_ready:
+                self.get_logger().warn(f"⚠️  AMCL perdeu localização: {str(e)}")
+                self.amcl_ready = False
+            return False
+    
 def main(args=None):
     rclpy.init(args=args)
     
