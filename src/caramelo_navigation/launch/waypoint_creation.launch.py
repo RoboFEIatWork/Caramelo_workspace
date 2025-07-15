@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 """
-WAYPOINT CREATION LAUNCH - CARAMELO NAVIGATION
-==============================================
+WAYPOINT CREATION LAUNCH - CARAMELO NAVIGATION (WORKSTATION-READY)
+================================================================
 
-Launch file interativo para criação de waypoints usando RViz e Nav2 poses.
-Baseado nas melhores práticas do tutorial Automatic Addison.
+Launch file interativo para criação de waypoints/workstations usando RViz.
+Agora com suporte específico para workstations da RoboCup@Work.
 
 Usage:
-    ros2 launch caramelo_navigation waypoint_creation.launch.py map_folder:=maps/arena_fei
+    ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=arena_fei
 
 Features:
 - Map server com mapa pré-existente
-- Robot description para visualização
+- Robot description para visualização  
 - Interface interativa no RViz
-- Criação de waypoints via 2D Nav Goal
-- Exportação automática para waypoints.json na pasta do mapa
+- Criação de workstations com posicionamento preciso (8cm da mesa)
+- Validação de free space 80x80cm
+- Exportação automática para waypoints.json na pasta da arena
 
-Como usar:
-1. Execute o launch file
-2. Aguarde o RViz abrir
-3. Use "2D Pose Estimate" para posicionar o robô virtualmente
-4. Use "2D Nav Goal" para criar waypoints nomeados
-5. Os waypoints são salvos automaticamente em [map_folder]/waypoints.json
+Como usar para WORKSTATIONS:
+1. Execute: ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=arena_fei
+2. Use "2D Pose Estimate" para marcar o CENTRO da mesa de trabalho
+3. Use "2D Nav Goal" para definir a posição de DOCKING do robô (8cm da mesa)
+4. Digite nome da WS (ex: "WS01", "WS02")
+5. Os waypoints são salvos automaticamente em maps/[arena]/waypoints.json
 
-IMPORTANTE: Este é apenas para criação de waypoints, não para navegação real.
-Para navegação, use os launch files específicos do caramelo_navigation.
+IMPORTANTE: Agora otimizado para criar posições de docking nas workstations!
 """
 
 import os
@@ -46,12 +46,13 @@ def generate_launch_description():
     caramelo_desc_dir = get_package_share_directory('caramelo_description')
     
     # Parâmetros
-    map_folder = LaunchConfiguration('map_folder')
+    arena = LaunchConfiguration('arena')
     
     # Argumentos obrigatórios
-    declare_map_folder_cmd = DeclareLaunchArgument(
-        'map_folder',
-        description='OBRIGATÓRIO: Path to map folder (ex: maps/arena_fei). Files map.yaml and map.pgm must exist inside.')
+    declare_arena_cmd = DeclareLaunchArgument(
+        'arena',
+        default_value='arena_fei',
+        description='Nome da arena (ex: arena_fei, hotel, laboratorio). Map files must exist in maps/[arena]/ folder.')
     
     # URDF do robô
     urdf_file = os.path.join(caramelo_desc_dir, 'URDF', 'robot.urdf.xacro')
@@ -60,9 +61,15 @@ def generate_launch_description():
         value_type=str
     )
     
-    # Construir caminho completo para o arquivo map.yaml usando PathJoinSubstitution
+    # Construir caminho para a pasta do mapa baseado na arena
+    map_folder_path = PathJoinSubstitution([
+        '/home/work/Caramelo_workspace/maps',
+        arena
+    ])
+    
+    # Construir caminho completo para o arquivo map.yaml
     map_file_path = PathJoinSubstitution([
-        map_folder,
+        map_folder_path,
         'map.yaml'
     ])
     
@@ -129,7 +136,7 @@ def generate_launch_description():
         name='interactive_robot_positioner',
         parameters=[{
             'map_file': map_file_path,
-            'map_folder': map_folder
+            'map_folder': map_folder_path
         }],
         output='screen'
     )
@@ -151,7 +158,7 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
-        declare_map_folder_cmd,
+        declare_arena_cmd,
         map_server,
         lifecycle_manager,
         robot_state_publisher,

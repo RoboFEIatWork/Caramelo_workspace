@@ -1,5 +1,6 @@
 import json
 import math
+import os
 import time
 
 import rclpy
@@ -77,7 +78,7 @@ class EncoderJointStateNode(Node):
         # Timer para display estático (a cada 0.1 segundos = 10Hz)
         self.create_timer(0.1, self.display_static_info)
         
-        self.get_logger().info('🔄 CARAMELO ENCODERS - Iniciando...')
+        self.get_logger().info('CARAMELO ENCODERS - Iniciando...')
         self.get_logger().info('Nó de encoders e odometria iniciado!')
         self.get_logger().info(f'Parâmetros físicos:')
         self.get_logger().info(f'  - Raio das rodas: {self.wheel_radius}m')
@@ -93,6 +94,18 @@ class EncoderJointStateNode(Node):
     def setup_serial_connection(self):
         """Configura conexão serial com a ESP32 dos encoders"""
         try:
+            # BACKUP da odometria antes de reset (CRÍTICO para SLAM!)
+            odometry_backup = None
+            if hasattr(self, 'x'):
+                odometry_backup = {
+                    'x': self.x,
+                    'y': self.y, 
+                    'theta': self.theta,
+                    'position': self.position[:],
+                    'last_counts': self.last_counts[:]
+                }
+                self.get_logger().warn(f"💾 BACKUP odometria: x={self.x:.3f}, y={self.y:.3f}, θ={math.degrees(self.theta):.1f}°")
+            
             # Fechar qualquer conexão anterior
             if hasattr(self, 'serial_port') and self.serial_port.is_open:
                 self.serial_port.close()
@@ -113,6 +126,18 @@ class EncoderJointStateNode(Node):
             self.serial_port.reset_input_buffer()
             self.serial_port.reset_output_buffer()
             
+            # RESTAURAR odometria após reset (SALVA O SLAM!)
+            if odometry_backup:
+                self.x = odometry_backup['x']
+                self.y = odometry_backup['y']
+                self.theta = odometry_backup['theta']
+                self.position = odometry_backup['position']
+                # NÃO restaurar last_counts - deixar zerados para nova referência
+                self.last_counts = [0, 0, 0, 0]
+                self.last_raw_counts = [0, 0, 0, 0]
+                self.get_logger().warn(f"🔄 RESTAURADA odometria: x={self.x:.3f}, y={self.y:.3f}, θ={math.degrees(self.theta):.1f}°")
+                self.get_logger().warn("⚠️ CONTADORES ZERADOS - nova referência estabelecida")
+            
             self.get_logger().info("✅ ESP32 dos encoders resetada e pronta!")
             self.connection_established = True
             
@@ -124,7 +149,6 @@ class EncoderJointStateNode(Node):
 
     def display_static_info(self):
         """Display estático com limpeza de tela - valores atualizados no mesmo local"""
-        import os
         import sys
 
         # Método mais robusto para limpar tela

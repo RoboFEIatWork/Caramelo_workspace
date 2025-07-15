@@ -4,8 +4,6 @@
 ![Platform](https://img.shields.io/badge/Platform-Real%20Robot-blue.svg)
 ![Status](https://img.shields.io/badge/Status-In%20Development-yellow.svg)
 
-Sistema ROS 2 completo e modular para o robô Caramelo, uma plataforma móvel omnidirecional com qua## 📍 Tutorial 6: Criação de Waypoints
-
 **Objetivo:** Criar waypoints nomeados a partir de um mapa existente. rodas mecanum, desenvolvida para a **RoboCup@Work**. O sistema utiliza ROS 2 Jazzy e foi projetado para controle embarcado real.
 
 ---
@@ -80,7 +78,9 @@ source install/setup.bash
 # Terminal 1: Encoders + Robot Description
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup encoder_bringup.launch.py
+```
 
+```bash
 # Terminal 2: Controle de Motores
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup pwm_bringup.launch.py
@@ -106,11 +106,13 @@ ros2 launch caramelo_bringup teleop_keyboard.launch.py
 # Terminal 1: Encoders + Robot Description
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup encoder_bringup.launch.py
-
+```
+```bash
 # Terminal 2: Controle de Motores
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup pwm_bringup.launch.py
-
+```
+```bash
 # Terminal 3: LiDAR
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup lidar_bringup.launch.py
@@ -157,7 +159,8 @@ ros2 launch caramelo_bringup teleop_keyboard.launch.py
 # Terminal 1: Encoders + Robot Description
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup encoder_bringup.launch.py
-
+```
+```bash
 # Terminal 2: Controle de Motores
 cd ~/Caramelo_workspace && source install/setup.bash
 ros2 launch caramelo_bringup pwm_bringup.launch.py
@@ -839,46 +842,147 @@ ros2 service list | grep navigate_to_pose
 
 ## 📍 Tutorial 6: Criação de Waypoints
 
-**Objetivo:** Criar waypoints nomeados a partir de um mapa existente.
+**Objetivo:** Criar waypoints nomeados a partir de um mapa existente para docking em workstations.
 
-### Passo 1: Ir para o Workspace
+**✅ NOVO FORMATO:** Sistema agora gera waypoints otimizados para competição RoboCup@Work!
+
+### 🎯 Formato Otimizado para Workstations
+
+O sistema agora gera waypoints no formato **simplificado e direto**:
+
+```json
+{
+  "workstations": [
+    {
+      "name": "WS01",
+      "x": 2.500,
+      "y": 1.200,
+      "theta": 0.0,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS02", 
+      "x": 4.800,
+      "y": 2.400,
+      "theta": 90.0,
+      "type": "workstation_docking"
+    }
+  ]
+}
+```
+
+### 🚀 Passo 1: Ir para o Workspace
 ```bash
 # Certifique-se de estar na pasta do workspace
 cd ~/Caramelo_workspace
 source install/setup.bash
 ```
 
-### Passo 2: Waypoint Creator
+### 🏭 Passo 2: Waypoint Creator por Arena
 ```bash
-# Terminal único: Criador interativo de waypoints
-# SUBSTITUA "arena_fei" pelo nome da sua pasta de mapa
-ros2 launch caramelo_navigation waypoint_creation.launch.py map_file:=$PWD/maps/arena_fei/map.yaml
+# NOVO COMANDO - mais simples!
+ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=arena_fei
+
+# Para outras arenas:
+ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=hotel
+ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=laboratorio
 ```
 
-**📝 IMPORTANTE - Explicação do `$PWD`:**
-- **`$PWD`** = **P**rint **W**orking **D**irectory = pasta atual do terminal
-- Se você está em `~/Caramelo_workspace`, então `$PWD` = `/home/work/Caramelo_workspace`
-- **❌ NÃO substitua** `$PWD` por nada! O terminal faz isso automaticamente
-- **✅ Substitua APENAS** `ambiente_escritorio` pelo nome da pasta do seu mapa
-- **Exemplos válidos:**
-  - `map_file:=$PWD/maps/competicao_robocup/map.yaml`
-  - `map_file:=$PWD/maps/arena_fei/map.yaml`
+**📝 IMPORTANTE - Suporte Múltiplas Arenas:**
+- **`arena:=arena_fei`** → Salva em `maps/arena_fei/workstations.json`
+- **`arena:=hotel`** → Salva em `maps/hotel/workstations.json`
+- **`arena:=laboratorio`** → Salva em `maps/laboratorio/workstations.json`
+- **Arena padrão:** Se não especificar, usa `arena_fei`
 
-### Passo 3: Criar Waypoints no RViz
+### 🎯 Passo 3: Criar Waypoints de Docking no RViz
+
+#### **NOVA METODOLOGIA - Otimizada para Workstations:**
+
 1. **Aguarde** o RViz abrir completamente
-2. **2D Pose Estimate:** Posicione o robô virtual no mapa
-3. **2D Nav Goal:** Clique para criar um waypoint
-4. **Digite o nome:** Ex: "mesa_1", "porta_entrada", "area_trabalho"
-5. **Repita** para todos os pontos importantes
+2. **2D Pose Estimate:** Posicione o robô virtual na **POSE DE DOCKING** da workstation
+   - **IMPORTANTE:** Esta é a posição exata onde o robô deve parar para manipular objetos
+   - **Orientação:** Ajuste para que o robô fique voltado para a mesa/workstation
+   - **Distância:** Geralmente 8-10cm da borda da mesa
+3. **2D Nav Goal:** Clique para **SALVAR** o waypoint de docking
+4. **Nome automático:** Sistema nomeia como "WS01", "WS02", etc.
+5. **Repita** para todas as workstations da arena
 6. **Ctrl+C** para finalizar e salvar
 
-### Passo 4: Verificar Waypoints
+### 📊 Passo 4: Verificar Workstations Criadas
 ```bash
-# Os waypoints são salvos automaticamente na pasta do mapa
-cat ~/Caramelo_workspace/maps/arena_fei/waypoints.json
+# Verificar waypoints salvos na arena específica
+cat ~/Caramelo_workspace/maps/arena_fei/workstations.json
+
+# Para outras arenas:
+cat ~/Caramelo_workspace/maps/hotel/workstations.json
 ```
 
-✅ **Sucesso:** Arquivo JSON com waypoints nomeados criado na pasta do mapa.
+### 🎉 Vantagens do Novo Sistema:
+
+| **Aspecto** | **Formato Antigo** | **Formato NOVO** |
+|-------------|-------------------|------------------|
+| **Arquivo** | `waypoints.json` (complexo) | `workstations.json` (limpo) |
+| **Estrutura** | Quaternions + position/orientation | x, y, theta (graus) |
+| **Tamanho** | ~20 linhas por waypoint | ~6 linhas por waypoint |
+| **Legibilidade** | Difícil de ler/editar | Fácil de ler/editar |
+| **Competição** | Genérico | Otimizado para RoboCup@Work |
+| **Arenas** | Uma pasta fixa | Suporte múltiplas arenas |
+| **Docking** | Coordenadas genéricas | Poses específicas para docking |
+
+### 🤖 Como o Sistema Entende os Waypoints:
+
+1. **`x, y`:** Posição exata onde o robô deve parar (em metros)
+2. **`theta`:** Orientação final em graus (0° = leste, 90° = norte)
+3. **`name`:** Nome da workstation (WS01, WS02, etc.)
+4. **`type`:** Sempre "workstation_docking" para competição
+
+### 🔄 Compatibilidade com Navegação:
+
+O sistema de navegação foi **automaticamente atualizado** para:
+- ✅ **Ler** tanto formato novo quanto legado
+- ✅ **Converter** automaticamente theta de graus para radianos
+- ✅ **Detectar** formato do arquivo automaticamente
+- ✅ **Funcionar** com workstations ou waypoints
+
+### 🗺️ Fluxo Completo para Nova Arena:
+
+```bash
+# 1. Criar nova arena "laboratorio"
+mkdir -p ~/Caramelo_workspace/maps/laboratorio
+
+# 2. Mapear ambiente (copie map.yaml e map.pgm para a pasta)
+# ... processo de mapeamento ...
+
+# 3. Criar waypoints de workstations
+cd ~/Caramelo_workspace && source install/setup.bash
+ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=laboratorio
+
+# 4. No RViz: marcar posições de docking de cada WS
+# 5. Arquivos gerados automaticamente:
+#    - maps/laboratorio/workstations.json
+```
+
+### 📁 Estrutura Final de Arenas:
+
+```
+~/Caramelo_workspace/maps/
+├── arena_fei/                          # Arena principal
+│   ├── map.yaml                        # Mapa da arena
+│   ├── map.pgm                         # Dados do mapa  
+│   └── workstations.json               # Workstations para docking
+│
+├── hotel/                              # Arena do hotel
+│   ├── map.yaml
+│   ├── map.pgm
+│   └── workstations.json
+│
+└── laboratorio/                        # Arena do laboratório
+    ├── map.yaml
+    ├── map.pgm
+    └── workstations.json
+```
+
+✅ **Sucesso:** Sistema multiareana com formato otimizado para workstations da competição RoboCup@Work!
 
 ---
 
