@@ -1,67 +1,48 @@
 # Nav2 - Configuração SIMPLES para robô real
 # Caramelo - Sistema de navegação autônoma
 
-# AMCL - Localização ROBUSTA para Competição (Encoder + LiDAR híbrido)
+# AMCL - Localização por LiDAR (PRIORIZA LIDAR sobre odometria ruim)
 amcl:
   ros__parameters:
     use_sim_time: false
-    # === 🎯 OTIMIZAÇÃO ESPECÍFICA PARA ROTAÇÃO IMPRECISA ===
-    # LiDAR para correção angular, encoder para posição X/Y
-    alpha1: 0.4   # ⭐ AUMENTADO MAIS - rotação do encoder tem alta incerteza
-    alpha2: 0.2   # ⭐ MODERADO - ruído translacional por rotação 
-    alpha3: 0.05  # ⭐ MUITO BAIXO - encoder X/Y é confiável
-    alpha4: 0.3   # ⭐ ALTO - rotação por translação também imprecisa
-    alpha5: 0.15  # ⭐ MODERADO - ruído geral para permitir correções do LiDAR
+    alpha1: 0.8  # erro rotacional por movimento rotacional - AUMENTADO para compensar odometria ruim
+    alpha2: 0.8  # erro rotacional por movimento translacional - AUMENTADO
+    alpha3: 0.6  # erro translacional por movimento translacional - AUMENTADO
+    alpha4: 0.6  # erro translacional por movimento rotacional - AUMENTADO
+    alpha5: 0.4  # frequência de erro estranho - AUMENTADO
     base_frame_id: "base_footprint"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
     do_beamskip: false
     global_frame_id: "map"
-    lambda_short: 0.1   # ⭐ REDUZIDO - dar mais peso a leituras curtas (detecção precisa)
-    laser_likelihood_max_dist: 1.5  # ⭐ AUMENTADO - considera matches mais distantes
-    laser_max_range: 10.0  # ⭐ AUMENTADO - usa alcance completo do LiDAR
-    laser_min_range: 0.1   
+    lambda_short: 0.1
+    laser_likelihood_max_dist: 2.0
+    laser_max_range: 100.0
+    laser_min_range: -1.0
     laser_model_type: "likelihood_field"
-    max_beams: 60    # ⭐ AUMENTADO - mais beams para correção rotacional
-    max_particles: 2000  # ⭐ AUMENTADO - mais partículas para melhor localização
-    min_particles: 500   # ⭐ AUMENTADO - base maior para robustez
+    max_beams: 60
+    max_particles: 5000  # AUMENTADO para melhor localização
+    min_particles: 1500  # AUMENTADO
     odom_frame_id: "odom"
-    pf_err: 0.05  # ⭐ RELAXADO - permite mais correção pelo LiDAR
-    pf_z: 0.95    # ⭐ REDUZIDO - menos confiança para permitir correções
-    recovery_alpha_fast: 0.2   # ⭐ MAIS RÁPIDO - recuperação ativa
-    recovery_alpha_slow: 0.001 # ⭐ LENTO para evitar saltos
+    pf_err: 0.02  # REDUZIDO para localização mais precisa
+    pf_z: 0.99
+    recovery_alpha_fast: 0.2  # AUMENTADO para recuperação mais rápida
+    recovery_alpha_slow: 0.002  # AUMENTADO
     resample_interval: 1
-    robot_model_type: "nav2_amcl::OmniMotionModel"  # ⭐ OMNI MODEL para mecanum!
-    save_pose_rate: 5.0  # ⭐ AUMENTADO para salvar pose mais frequentemente
-    sigma_hit: 0.2  # ⭐ REDUZIDO - mais exigente com matches para precisão
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    save_pose_rate: 2.0  # AUMENTADO para salvar pose mais frequentemente
+    sigma_hit: 0.1  # REDUZIDO para ser mais exigente com matches
     tf_broadcast: true
-    transform_tolerance: 2.0  # ⭐ REDUZIDO para melhor sincronização
-    update_min_a: 0.1   # ⭐ MAIS FREQUENTE - update a cada 6° (melhor correção rotacional)
-    update_min_d: 0.05  # ⭐ MAIS FREQUENTE - update a cada 5cm (melhor precisão)
-    
-    # === 🎯 CONFIGURAÇÃO HÍBRIDA: ENCODER (X/Y) + LIDAR (ROTAÇÃO) ===
-    # Usar encoder para posição, LiDAR para corrigir orientação
-    global_localization: false  # ⭐ Evitar relocalizações drásticas
-    initial_pose_covariance_xx: 0.25      # ⭐ REDUZIDA - confiança alta em X (encoder bom)
-    initial_pose_covariance_yy: 0.25      # ⭐ REDUZIDA - confiança alta em Y (encoder bom)  
-    initial_pose_covariance_aa: 0.68      # ⭐ AUMENTADA - menos confiança em rotação (39°)
-    
-    # === PESO OTIMIZADO: LiDAR dominante para correção angular ===
-    z_hit: 0.95   # ⭐ MÁXIMO peso aos hits do LIDAR (crucial para orientação)
-    z_max: 0.025  # ⭐ MÍNIMO peso para leituras no limite
-    z_rand: 0.025 # ⭐ MÍNIMO peso para ruído aleatório
-    z_short: 0.0  # ⭐ ZERO peso para leituras curtas
+    transform_tolerance: 1.0  # AUMENTADO para teste com robô suspenso
+    update_min_a: 0.1  # RELAXADO para teste estático 
+    update_min_d: 0.1  # RELAXADO para teste estático
+    z_hit: 0.5  # REDUZIDO para ser menos exigente durante teste
+    z_max: 0.05
+    z_rand: 0.4  # AUMENTADO para tolerar mais ruído durante teste
+    z_short: 0.05
     scan_topic: scan
     map_topic: map
-    
-    # === SINCRONIZAÇÃO OTIMIZADA ===
-    tf_tolerance: 0.5                    # ⭐ REDUZIDA para sincronização precisa
-    laser_max_beams: 180                 # ⭐ AUMENTADO - usar mais dados do LiDAR
-    laser_z_hit: 0.95                    # ⭐ MUITO ALTO - priorizar dados do LiDAR
-    laser_z_rand: 0.05                   # ⭐ BAIXO ruído aleatório
-    laser_sigma_hit: 0.1                 # ⭐ Alta precisão do LIDAR
-    
     set_initial_pose: true
     always_reset_initial_pose: false
     first_map_only: false
@@ -71,7 +52,6 @@ amcl:
       z: 0.0
       yaw: 0.0
 
-# Behavior Tree Navigator
 bt_navigator:
   ros__parameters:
     use_sim_time: false
@@ -86,136 +66,138 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
+    # Arquivo de Behavior Tree SIMPLES para debug - caminhos absolutos
+    default_nav_to_pose_bt_xml: "/opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    default_nav_through_poses_bt_xml: "/opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml"
+    # Parâmetros extras para debug
+    plugin_lib_names:
+    - nav2_compute_path_to_pose_action_bt_node
+    - nav2_compute_path_through_poses_action_bt_node  
+    - nav2_smooth_path_action_bt_node
+    - nav2_follow_path_action_bt_node
+    - nav2_spin_action_bt_node
+    - nav2_wait_action_bt_node
+    - nav2_assisted_teleop_action_bt_node
+    - nav2_back_up_action_bt_node
+    - nav2_drive_on_heading_bt_node
+    - nav2_clear_costmap_service_bt_node
+    - nav2_is_stuck_condition_bt_node
+    - nav2_goal_reached_condition_bt_node
+    - nav2_goal_updated_condition_bt_node
+    - nav2_globally_updated_goal_condition_bt_node
+    - nav2_is_path_valid_condition_bt_node
+    - nav2_initial_pose_received_condition_bt_node
+    - nav2_reinitialize_global_localization_service_bt_node
+    - nav2_rate_controller_bt_node
+    - nav2_distance_controller_bt_node
+    - nav2_speed_controller_bt_node
+    - nav2_truncate_path_action_bt_node
+    - nav2_truncate_path_local_action_bt_node
+    - nav2_goal_updater_node_bt_node
+    - nav2_recovery_node_bt_node
+    - nav2_pipeline_sequence_bt_node
+    - nav2_round_robin_node_bt_node
+    - nav2_transform_available_condition_bt_node
+    - nav2_time_expired_condition_bt_node
+    - nav2_path_expiring_timer_condition
+    - nav2_distance_traveled_condition_bt_node
+    - nav2_single_trigger_bt_node
+    - nav2_goal_updated_controller_bt_node
+    - nav2_is_battery_low_condition_bt_node
+    - nav2_navigate_through_poses_action_bt_node
+    - nav2_navigate_to_pose_action_bt_node
+    - nav2_remove_passed_goals_action_bt_node
+    - nav2_planner_selector_bt_node
+    - nav2_controller_selector_bt_node
+    - nav2_goal_checker_selector_bt_node
 
-# Controller Server - DWB para Mecanum Drive Holonômico
+# Controller Server
 controller_server:
   ros__parameters:
     use_sim_time: false
-    controller_frequency: 10.0  # ⭐ AUMENTADO para controle mais responsivo
+    controller_frequency: 10.0
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.001  # ⭐ REDUZIDO - permite movimento lateral (holonômico)
+    min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
-    goal_checker_plugins: ["general_goal_checker"] 
-    controller_plugins: ["FollowPath"]  # DWB para navegação holonômica
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
     
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.05  # ⭐ REDUZIDO para WS (movimento mais preciso)
-      movement_time_allowance: 30.0   # ⭐ AUMENTADO para manobras complexas em WS
+      required_movement_radius: 0.1
+      movement_time_allowance: 20.0
       
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.05  # ⭐ MUITO RESTRITIVO para posicionamento preciso em WS
-      yaw_goal_tolerance: 0.087  # ⭐ 5° para orientação precisa em WS
+      xy_goal_tolerance: 0.06
+      yaw_goal_tolerance: 0.1
       
-    # === DWB PLANNER - NAVEGAÇÃO HOLONÔMICA PARA MECANUM ===
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
-      debug_trajectory_details: True
-      min_vel_x: -0.3  # ⭐ Permite movimento para trás
-      min_vel_y: -0.3  # ⭐ Permite movimento lateral (HOLONÔMICO)
-      max_vel_x: 0.5   # ⭐ Velocidade máxima frente
-      max_vel_y: 0.3   # ⭐ Velocidade lateral para mecanum
-      max_vel_theta: 1.0
-      min_speed_xy: 0.01  # ⭐ Velocidade mínima para movimento suave
-      max_speed_xy: 0.5   # ⭐ Velocidade máxima combinada
-      min_speed_theta: 0.05
-      acc_lim_x: 0.3      # ⭐ Aceleração suave
-      acc_lim_y: 0.3      # ⭐ Aceleração lateral suave  
-      acc_lim_theta: 1.5  # ⭐ Aceleração angular
-      decel_lim_x: -0.3   # ⭐ Desaceleração
-      decel_lim_y: -0.3   # ⭐ Desaceleração lateral
-      decel_lim_theta: -1.5
-      vx_samples: 5       # ⭐ Amostras de velocidade X
-      vy_samples: 5       # ⭐ Amostras de velocidade Y (holonômico)
-      vtheta_samples: 10  # ⭐ Amostras de velocidade angular
-      sim_time: 2.0       # ⭐ Tempo de simulação para trajetórias
-      sim_granularity: 0.05 # ⭐ Granularidade da simulação
-      sim_period: 0.1     # ⭐ Período de simulação
-      discretize_by_time: false
-      angular_sim_granularity: 0.1
-      transform_tolerance: 0.5
-      
-      # === CRITICS (Avaliadores de Trajetória) ===
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      
-      BaseObstacle:
-        scale: 0.02  # ⭐ REDUZIDO - permite passar mais perto de obstáculos quando necessário
-        sum_scores: false
-        
-      PathAlign:
-        scale: 32.0
-        forward_point_distance: 0.1
-        
-      PathDist:
-        scale: 32.0
-        
-      GoalAlign:
-        scale: 24.0  # ⭐ AUMENTADO - importante para orientação precisa em WS
-        forward_point_distance: 0.1
-        
-      GoalDist:
-        scale: 24.0  # ⭐ AUMENTADO - importante para posição precisa em WS
-        
-      RotateToGoal:
-        scale: 32.0
-        slowing_factor: 5.0
-        lookahead_time: -1.0
-        
-      Oscillation:
-        scale: 1.0
-        oscillation_reset_dist: 0.05
-        oscillation_reset_angle: 0.2
-        oscillation_reset_time: -1.0
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 0.15
+      lookahead_dist: 0.3
+      min_lookahead_dist: 0.15
+      max_lookahead_dist: 0.5
+      lookahead_time: 1.5
+      rotate_to_heading_angular_vel: 0.2
+      transform_tolerance: 0.05
+      use_velocity_scaled_lookahead_dist: true
+      min_approach_linear_velocity: 0.02
+      approach_velocity_scaling_dist: 0.3
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 0.4
+      regulated_linear_scaling_min_speed: 0.1
+      use_rotate_to_heading: true
+      allow_reversing: false
+      rotate_to_heading_min_angle: 0.5
+      max_angular_accel: 1.5
+      max_robot_pose_search_dist: 5.0
 
-# Local Costmap - LiDAR para obstáculos dinâmicos apenas
+# Local Costmap
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 10.0  # ⭐ AUMENTADO para detecção rápida de obstáculos dinâmicos
-      publish_frequency: 5.0  # ⭐ AUMENTADO para responsividade
+      update_frequency: 5.0
+      publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_footprint
       use_sim_time: false
       rolling_window: true
-      width: 4  # ⭐ AUMENTADO para melhor visão de obstáculos
-      height: 4 # ⭐ AUMENTADO para melhor visão de obstáculos
+      width: 3
+      height: 3
       resolution: 0.05
-      transform_tolerance: 1.0
-      # === FOOTPRINT PRECISO DO CARAMELO (retângulo mais comprido que largo) ===
-      footprint: "[[0.185, 0.175], [0.185, -0.175], [-0.185, -0.175], [-0.185, 0.175]]"  # ⭐ 37cm x 35cm
-      plugins: ["obstacle_layer", "inflation_layer"]
+      footprint: "[[0.25, 0.0], [0.177, 0.177], [0.0, 0.25], [-0.177, 0.177], [-0.25, 0.0], [-0.177, -0.177], [0.0, -0.25], [0.177, -0.177]]"
+      plugins: ["inflation_layer"]
       
-      obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: True
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0   # ⭐ AUMENTADO para melhor clearing
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5   # ⭐ AUMENTADO para detecção precoce
-          obstacle_min_range: 0.0
-          inf_is_valid: false       # ⭐ Ignora leituras infinitas
-          clearing_on_max_reading: true  # ⭐ Limpa com leituras máximas
+      # obstacle_layer: # DESABILITADO TEMPORARIAMENTE PARA DEBUG
+      #   plugin: "nav2_costmap_2d::ObstacleLayer"
+      #   enabled: False
+      #   observation_sources: scan
+      #   scan:
+      #     topic: /scan
+      #     max_obstacle_height: 2.0
+      #     clearing: True
+      #     marking: True
+      #     data_type: "LaserScan"
+      #     raytrace_max_range: 3.0
+      #     raytrace_min_range: 0.0
+      #     obstacle_max_range: 2.5
+      #     obstacle_min_range: 0.0
           
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0    # ⭐ REDUZIDO - permite aproximação para WS
-        inflation_radius: 0.20      # ⭐ AUMENTADO - margem de segurança maior
-        inflate_unknown: false     # ⭐ Não infla áreas desconhecidas
-        inflate_around_unknown: true # ⭐ Infla ao redor de desconhecidas
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.05
         
       always_send_full_costmap: True
 
-# Global Costmap - Mapa estático + obstáculos dinâmicos (SEM SOBRESCREVER MAPA)
+# Global Costmap
 global_costmap:
   global_costmap:
     ros__parameters:
@@ -224,47 +206,34 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_footprint
       use_sim_time: false
-      # === FOOTPRINT PRECISO DO CARAMELO (retângulo mais comprido que largo) ===
-      footprint: "[[0.185, 0.175], [0.185, -0.175], [-0.185, -0.175], [-0.185, 0.175]]"  # ⭐ 37cm x 35cm
+      footprint: "[[0.25, 0.0], [0.177, 0.177], [0.0, 0.25], [-0.177, 0.177], [-0.25, 0.0], [-0.177, -0.177], [0.0, -0.25], [0.177, -0.177]]"
       resolution: 0.05
-      transform_tolerance: 1.0
       track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["static_layer", "inflation_layer"]
       
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
-        subscribe_to_updates: false  # ⭐ CRUCIAL: não aceita updates do mapa estático
         
-      obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: True
-        observation_sources: scan
-        combination_method: 1  # ⭐ MAXIMUM: LiDAR só ADICIONA obstáculos, não remove mapa estático
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: False      # ⭐ CRUCIAL: LiDAR NÃO APAGA mapa estático
-          marking: True        # ⭐ LiDAR só MARCA novos obstáculos dinâmicos
-          data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-          inf_is_valid: false
-          expected_update_rate: 10.0  # ⭐ Frequência esperada do LiDAR
-          observation_persistence: 2.0 # ⭐ Mantém obstáculos por 2s após sumirem
-          max_obstacle_height: 2.0
-          min_obstacle_height: 0.0
-          obstacle_range: 2.5
-          raytrace_range: 3.0
+      # obstacle_layer: # DESABILITADO TEMPORARIAMENTE PARA DEBUG
+      #   plugin: "nav2_costmap_2d::ObstacleLayer"
+      #   enabled: False
+      #   observation_sources: scan
+      #   scan:
+      #     topic: /scan
+      #     max_obstacle_height: 2.0
+      #     clearing: True
+      #     marking: True
+      #     data_type: "LaserScan"
+      #     raytrace_max_range: 3.0
+      #     raytrace_min_range: 0.0
+      #     obstacle_max_range: 2.5
+      #     obstacle_min_range: 0.0
           
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0    # ⭐ GLOBAL: penalização padrão
-        inflation_radius: 0.15      # ⭐ GLOBAL: 15cm de margem geral
-        inflate_unknown: false     # ⭐ Não infla áreas desconhecidas
-        inflate_around_unknown: false # ⭐ Não infla ao redor de desconhecidas no global
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.05
         
       always_send_full_costmap: True
 
@@ -274,23 +243,20 @@ map_server:
     use_sim_time: false
     yaml_filename: "/home/work/Caramelo_workspace/maps/arena_fei/map.yaml"
 
-# Planner Server - A* para competição
+# Planner Server
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 30.0  # ⭐ AUMENTADO para A* mais rápido
+    expected_planner_frequency: 20.0
     use_sim_time: false
     planner_plugins: ["GridBased"]
     
     GridBased:
       plugin: "nav2_navfn_planner::NavfnPlanner"
-      tolerance: 0.3  # ⭐ REDUZIDO para melhor precisão em WS
-      use_astar: true  # ⭐ A* HABILITADO para planejamento mais rápido e eficiente
+      tolerance: 0.5
+      use_astar: false
       allow_unknown: true
-      use_final_approach_orientation: true  # ⭐ Manter orientação final (crucial para WS)
-      use_quadratic_cost_penalty: false
-      use_dijkstra: false  # ⭐ Confirmar que usa A* ao invés de Dijkstra
 
-# Smoother Server - Simplificado para ROS2 Jazzy
+# Smoother Server
 smoother_server:
   ros__parameters:
     use_sim_time: false
@@ -300,7 +266,7 @@ smoother_server:
       plugin: "nav2_smoother::SimpleSmoother"
       tolerance: 1.0e-10
       max_its: 1000
-      do_refinement: true
+      do_refinement: True
 
 # Behavior Server
 behavior_server:
@@ -323,7 +289,7 @@ behavior_server:
       
     global_frame: map
     robot_base_frame: base_footprint
-    transform_tolerance: 0.3  # AUMENTADO para sincronização
+    transform_tolerance: 0.1
     use_sim_time: false
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0

@@ -90,27 +90,64 @@ class CarameloWaypointNav(Node):
         self.init_timer = self.create_timer(2.0, self.initialize_navigation)
     
     def load_waypoints_database(self):
-        """Carrega waypoints do arquivo waypoints.json (opcional)"""
+        """Carrega waypoints do arquivo waypoints.json (suporte ao novo formato)"""
         try:
             if os.path.exists(self.waypoints_file):
                 with open(self.waypoints_file, 'r') as f:
                     waypoints_data = json.load(f)
                     
-                waypoints_list = waypoints_data.get('waypoints', [])
-                
-                # Cria database por nome
-                for wp in waypoints_list:
-                    name = wp.get('name')
-                    if name:
-                        self.waypoints_db[name] = wp
-                        
-                self.get_logger().info(f"📍 Database: {len(self.waypoints_db)} waypoints disponíveis")
+                # Suporte ao NOVO formato: {"waypoints": [...]}
+                if 'waypoints' in waypoints_data:
+                    waypoints_list = waypoints_data['waypoints']
+                    
+                    # Cria database por nome para o novo formato
+                    for wp in waypoints_list:
+                        name = wp.get('name')
+                        if name:
+                            # Converter formato simplificado para formato compatível
+                            waypoint_compat = {
+                                'name': name,
+                                'position': {
+                                    'x': wp.get('x', 0.0),
+                                    'y': wp.get('y', 0.0),
+                                    'z': 0.0
+                                },
+                                'orientation': self.yaw_to_quaternion(math.radians(wp.get('theta', 0.0))),
+                                'type': wp.get('type', 'waypoint')
+                            }
+                            self.waypoints_db[name] = waypoint_compat
+                            
+                    self.get_logger().info(f"📍 Database (novo formato): {len(self.waypoints_db)} waypoints disponíveis")
+                    
+                # Suporte ao formato LEGADO: {"waypoints": [...]} com position/orientation
+                elif any('position' in wp for wp in waypoints_data.get('waypoints', [])):
+                    waypoints_list = waypoints_data.get('waypoints', [])
+                    
+                    # Cria database por nome para formato legado
+                    for wp in waypoints_list:
+                        name = wp.get('name')
+                        if name:
+                            self.waypoints_db[name] = wp
+                            
+                    self.get_logger().info(f"📍 Database (formato legado): {len(self.waypoints_db)} waypoints disponíveis")
+                    
+                else:
+                    self.get_logger().warn("⚠️ Formato de waypoints.json não reconhecido")
                         
             else:
                 self.get_logger().info(f"ℹ️  Arquivo waypoints.json não encontrado - usando coordenadas diretas")
                 
         except Exception as e:
             self.get_logger().warn(f"⚠️  Erro ao carregar waypoints.json: {e}")
+    
+    def yaw_to_quaternion(self, yaw):
+        """Converte yaw (radianos) para quaternion"""
+        return {
+            'x': 0.0,
+            'y': 0.0,
+            'z': math.sin(yaw / 2.0),
+            'w': math.cos(yaw / 2.0)
+        }
     
     def load_mission(self):
         """Carrega missão - suporta ambos os formatos"""
@@ -142,13 +179,9 @@ class CarameloWaypointNav(Node):
     def load_mission_by_names(self, waypoint_sequence):
         """Carrega missão usando referências por nome"""
         self.waypoints = []
+        self.initial_pose_waypoint = None  # Para armazenar pose START
         
         for wp_name in waypoint_sequence:
-            # ⚠️ PULAR WAYPOINT "START" - é apenas pose inicial
-            if wp_name.upper() == 'START':
-                self.get_logger().info(f"⏭️  Pulando waypoint '{wp_name}' (pose inicial)")
-                continue
-                
             if wp_name in self.waypoints_db:
                 wp_data = self.waypoints_db[wp_name]
                 pos = wp_data['position']
@@ -161,8 +194,16 @@ class CarameloWaypointNav(Node):
                     'x': pos['x'],
                     'y': pos['y'], 
                     'yaw': yaw,
-                    'name': wp_name
+                    'name': wp_name,
+                    'type': wp_data.get('type', 'waypoint')
                 }
+                
+                # START é usado como pose inicial, não como destino de navegação
+                if wp_name.upper() == 'START':
+                    self.initial_pose_waypoint = waypoint
+                    self.get_logger().info(f"📍 Pose START definida: ({waypoint['x']:.2f}, {waypoint['y']:.2f}) @ {math.degrees(waypoint['yaw']):.1f}°")
+                    continue
+                
                 self.waypoints.append(waypoint)
             else:
                 self.get_logger().error(f"❌ Waypoint '{wp_name}' não encontrado no database!")
@@ -170,6 +211,11 @@ class CarameloWaypointNav(Node):
         
         self.get_logger().info(f"🎯 Missão por NOMES: {len(self.waypoints)} waypoints")
         self.get_logger().info(f"   Sequência: {' -> '.join([wp['name'] for wp in self.waypoints])}")
+        
+        if self.initial_pose_waypoint:
+            self.get_logger().info(f"🏁 Pose inicial (START): {self.initial_pose_waypoint['name']}")
+        else:
+            self.get_logger().warn("⚠️ Nenhuma pose START definida - usando pose atual do robô")
     
     def load_mission_by_coordinates(self, waypoints_list):
         """Carrega missão usando coordenadas diretas (formato antigo)"""

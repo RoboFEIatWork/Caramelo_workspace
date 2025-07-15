@@ -1,0 +1,23 @@
+mission:
+  name: "Teste Navegação RoboCup@Work"
+  description: "Missão de teste com START -> WS01 -> WS02 -> FINISH"
+  
+  # Nova estrutura: referências por nome aos waypoints.json
+  waypoint_sequence:
+    - "START"    # Pose inicial do robô
+    - "WS01"     # Primeira workstation 
+    - "WS02"     # Segunda workstation
+    - "FINISH"   # Ponto final da missão
+  
+  # Configurações da missão
+  timeout_per_waypoint: 60.0  # segundos
+  retry_attempts: 3
+  tolerance:
+    position: 0.15    # 15cm de tolerância posicional
+    orientation: 0.2  # ~11° de tolerância rotacional
+  
+  # Configurações específicas para competição
+  competition:
+    auto_start: true
+    publish_initial_pose: true
+    safety_checks: true

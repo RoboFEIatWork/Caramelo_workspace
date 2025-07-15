@@ -1,0 +1,25 @@
+{
+  "workstations": [
+    {
+      "name": "WS01",
+      "x": 2.513,
+      "y": 2.255,
+      "theta": 179.9,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS02",
+      "x": 2.509,
+      "y": 2.31,
+      "theta": 179.7,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS03",
+      "x": 0.891,
+      "y": 2.343,
+      "theta": -0.5,
+      "type": "workstation_docking"
+    }
+  ]
+}

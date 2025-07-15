@@ -1,0 +1,32 @@
+{
+  "waypoints": [
+    {
+      "name": "START",
+      "x": 0.0,
+      "y": 0.0,
+      "theta": 0.0,
+      "type": "mission_start"
+    },
+    {
+      "name": "FINISH",
+      "x": 0.0,
+      "y": 0.0,
+      "theta": 0.0,
+      "type": "mission_finish"
+    },
+    {
+      "name": "WS01",
+      "x": 2.623,
+      "y": 2.228,
+      "theta": 179.9,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS02",
+      "x": 0.987,
+      "y": 2.194,
+      "theta": 0.2,
+      "type": "workstation_docking"
+    }
+  ]
+}

@@ -278,21 +278,61 @@ Goal 1: Canto próximo → Goal 2: Parede direita → Goal 3: Canto oposto
 → Goal 4: Parede esquerda → Goal 5: Centro da sala
 ```
 
-### 💾 Passo 5: Salvar o Mapa
+### 💾 Passo 5: Salvar o Mapa em Arena Específica
 
-#### Quando o mapeamento estiver completo:
+#### Para salvar em uma arena específica (ex: RoboCup 2025):
 
 ```bash
-# Terminal 4: Salvar mapa
+# Terminal 4: Criar pasta e salvar mapa
+mkdir -p ~/Caramelo_workspace/maps/arena_robocup25
+cd ~/Caramelo_workspace/maps/arena_robocup25
+ros2 run nav2_map_server map_saver_cli -f map
+```
+
+#### Para outras competições ou ambientes:
+```bash
+# Arena da FEI
+mkdir -p ~/Caramelo_workspace/maps/arena_fei
+cd ~/Caramelo_workspace/maps/arena_fei
+ros2 run nav2_map_server map_saver_cli -f map
+
+# Laboratório de teste
+mkdir -p ~/Caramelo_workspace/maps/teste_lab
+cd ~/Caramelo_workspace/maps/teste_lab
+ros2 run nav2_map_server map_saver_cli -f map
+
+# Hotel (competição)
+mkdir -p ~/Caramelo_workspace/maps/hotel
+cd ~/Caramelo_workspace/maps/hotel
+ros2 run nav2_map_server map_saver_cli -f map
+```
+
+#### Como usar o mapa salvo depois:
+```bash
+# Navegação na arena específica
 cd ~/Caramelo_workspace
-mkdir -p maps/meu_ambiente_$(date +%Y%m%d_%H%M%S)
-cd maps/meu_ambiente_$(date +%Y%m%d_%H%M%S)
-ros2 run nav2_map_server map_saver_cli -f goalpose_map
+ros2 launch caramelo_navigation caramelo_navigation.launch.py arena:=arena_robocup25
+ros2 launch caramelo_navigation caramelo_navigation.launch.py arena:=arena_fei
+ros2 launch caramelo_navigation caramelo_navigation.launch.py arena:=hotel
+```
+
+#### Estrutura de arquivos criada:
+```
+~/Caramelo_workspace/maps/
+├── arena_robocup25/
+│   ├── map.pgm                         # Dados do mapa
+│   └── map.yaml                        # Configurações do mapa
+├── arena_fei/
+│   ├── map.pgm
+│   └── map.yaml
+└── teste_lab/
+    ├── map.pgm
+    └── map.yaml
 ```
 
 #### Arquivos Criados:
-- `goalpose_map.pgm` - Imagem do mapa
-- `goalpose_map.yaml` - Metadados do mapa
+- `map.pgm` - Imagem do mapa
+- `map.yaml` - Metadados do mapa
 
 ### 📊 Passo 6: Monitoramento em Tempo Real
 
@@ -880,19 +920,20 @@ source install/setup.bash
 
 ### 🏭 Passo 2: Waypoint Creator por Arena
 ```bash
-# NOVO COMANDO - mais simples!
-ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=arena_fei
+# COMANDO USANDO map_file (formato atualizado):
+cd ~/Caramelo_workspace
+ros2 launch caramelo_navigation waypoint_creation.launch.py map_file:=$PWD/maps/teste_lab/map.yaml
 
 # Para outras arenas:
-ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=hotel
-ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=laboratorio
+ros2 launch caramelo_navigation waypoint_creation.launch.py map_file:=$PWD/maps/hotel/map.yaml
+ros2 launch caramelo_navigation waypoint_creation.launch.py map_file:=$PWD/maps/arena_fei/map.yaml
 ```
 
-**📝 IMPORTANTE - Suporte Múltiplas Arenas:**
-- **`arena:=arena_fei`** → Salva em `maps/arena_fei/workstations.json`
-- **`arena:=hotel`** → Salva em `maps/hotel/workstations.json`
-- **`arena:=laboratorio`** → Salva em `maps/laboratorio/workstations.json`
-- **Arena padrão:** Se não especificar, usa `arena_fei`
+**📝 IMPORTANTE - Salvamento Automático:**
+- **`maps/teste_lab/map.yaml`** → Salva em `maps/teste_lab/workstations.json`
+- **`maps/hotel/map.yaml`** → Salva em `maps/hotel/workstations.json`
+- **`maps/arena_fei/map.yaml`** → Salva em `maps/arena_fei/workstations.json`
+- **O arquivo `workstations.json` é criado automaticamente na mesma pasta do mapa**
 
 ### 🎯 Passo 3: Criar Waypoints de Docking no RViz
 
@@ -911,10 +952,33 @@ ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=laboratorio
 ### 📊 Passo 4: Verificar Workstations Criadas
 ```bash
 # Verificar waypoints salvos na arena específica
-cat ~/Caramelo_workspace/maps/arena_fei/workstations.json
+cat ~/Caramelo_workspace/maps/teste_lab/workstations.json
 
 # Para outras arenas:
 cat ~/Caramelo_workspace/maps/hotel/workstations.json
+cat ~/Caramelo_workspace/maps/arena_fei/workstations.json
+```
+
+**📋 Exemplo do formato de workstations.json:**
+```json
+{
+  "workstations": [
+    {
+      "name": "WS01",
+      "x": 1.245,
+      "y": 0.876,
+      "theta": 90.0,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS02", 
+      "x": 2.134,
+      "y": 1.567,
+      "theta": 180.0,
+      "type": "workstation_docking"
+    }
+  ]
+}
 ```
 
 ### 🎉 Vantagens do Novo Sistema:
@@ -936,6 +1000,32 @@ cat ~/Caramelo_workspace/maps/hotel/workstations.json
 3. **`name`:** Nome da workstation (WS01, WS02, etc.)
 4. **`type`:** Sempre "workstation_docking" para competição
 
+### 🔄 Testando as Workstations Criadas:
+
+**🎯 Passo 5: Teste da Navegação Autônoma**
+```bash
+# 1. Iniciar navegação na arena com workstations criadas
+cd ~/Caramelo_workspace && source install/setup.bash
+ros2 launch caramelo_navigation navigation_launch.py map_file:=$PWD/maps/teste_lab/map.yaml
+
+# 2. Em outro terminal, testar navegação para workstation
+ros2 topic pub /goal_pose geometry_msgs/PoseStamped '
+{
+  header: {frame_id: "map"},
+  pose: {
+    position: {x: 1.245, y: 0.876, z: 0.0},
+    orientation: {x: 0.0, y: 0.0, z: 0.707, w: 0.707}
+  }
+}'
+```
+
+**🤖 Como o Sistema Carrega as Workstations:**
+
+1. **Durante a navegação:** O sistema automaticamente lê `maps/[arena]/workstations.json`
+2. **Conversão automática:** Theta em graus é convertido para quaternions
+3. **Compatibilidade:** Aceita tanto formato novo quanto legado
+4. **Validação:** Verifica se as coordenadas estão dentro do mapa
+
 ### 🔄 Compatibilidade com Navegação:
 
 O sistema de navegação foi **automaticamente atualizado** para:
@@ -947,26 +1037,29 @@ O sistema de navegação foi **automaticamente atualizado** para:
 ### 🗺️ Fluxo Completo para Nova Arena:
 
 ```bash
-# 1. Criar nova arena "laboratorio"
-mkdir -p ~/Caramelo_workspace/maps/laboratorio
+# 1. Criar nova arena "teste_lab"
+mkdir -p ~/Caramelo_workspace/maps/teste_lab
 
 # 2. Mapear ambiente (copie map.yaml e map.pgm para a pasta)
 # ... processo de mapeamento ...
 
 # 3. Criar waypoints de workstations
 cd ~/Caramelo_workspace && source install/setup.bash
-ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=laboratorio
+ros2 launch caramelo_navigation waypoint_creation.launch.py map_file:=$PWD/maps/teste_lab/map.yaml
 
 # 4. No RViz: marcar posições de docking de cada WS
 # 5. Arquivos gerados automaticamente:
-#    - maps/laboratorio/workstations.json
+#    - maps/teste_lab/workstations.json
+
+# 6. Testar navegação
+ros2 launch caramelo_navigation navigation_launch.py map_file:=$PWD/maps/teste_lab/map.yaml
 ```
 
 ### 📁 Estrutura Final de Arenas:
 
 ```
 ~/Caramelo_workspace/maps/
-├── arena_fei/                          # Arena principal
+├── teste_lab/                          # Arena de teste
 │   ├── map.yaml                        # Mapa da arena
 │   ├── map.pgm                         # Dados do mapa  
 │   └── workstations.json               # Workstations para docking
@@ -974,6 +1067,15 @@ ros2 launch caramelo_navigation waypoint_creation.launch.py arena:=laboratorio
 ├── hotel/                              # Arena do hotel
 │   ├── map.yaml
 │   ├── map.pgm
+│   └── workstations.json
+│
+├── arena_fei/                          # Arena principal
+│   ├── map.yaml
+│   ├── map.pgm
+    └── workstations.json
+```
+
+---
 │   └── workstations.json
 │
 └── laboratorio/                        # Arena do laboratório

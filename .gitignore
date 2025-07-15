@@ -18,11 +18,12 @@ colcon_install_layout.*
 
 # === ROS 2 workspace overlays ===
 local_setup.*
-setup.*
+setup.bash
+setup.sh
+setup.zsh
+_local_setup_util_sh.py
 .env
 .env.*
-*.bash
-*.sh
 
 # === ROS 2 test results ===
 test_results/
