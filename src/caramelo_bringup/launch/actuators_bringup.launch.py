@@ -1,7 +1,34 @@
 #!/usr/bin/env python3
+"""
+ACTUATORS BRINGUP - Sistema de Atuadores do Robô Caramelo
+
+ATUADORES CONTROLADOS:
+======================
+1. ESP32 PWM - Controle das 4 rodas mecanum
+2. Controller Manager - ROS2 Control
+3. Mecanum Drive Controller - Plugin de controle
+
+TÓPICOS SUBSCRITOS:
+==================
+- /cmd_vel (geometry_msgs/Twist) - Comandos de velocidade
+
+TÓPICOS PUBLICADOS:
+==================
+- /joint_states (sensor_msgs/JointState) - Estados dos joints
+- /mecanum_drive_controller/cmd_vel - Comandos convertidos
+
+USO:
+====
+ros2 launch caramelo_bringup actuators_bringup.launch.py
+
+DEPENDÊNCIAS:
+============
+- robot_description deve estar ativo (robot_state.launch.py)
+- Arquivo de configuração: config/robot_controllers.yaml
+"""
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import (Command, FindExecutable, LaunchConfiguration,
                                   PathJoinSubstitution)
 from launch_ros.actions import Node
@@ -18,7 +45,7 @@ def generate_launch_description():
     caramelo_bringup_path = FindPackageShare('caramelo_bringup')
     
     # ===============================================
-    # 1. Arquivo de configuração dos controladores
+    # 1. Configuração dos controladores
     # ===============================================
     robot_controllers = PathJoinSubstitution([
         caramelo_bringup_path,
@@ -27,7 +54,7 @@ def generate_launch_description():
     ])
     
     # ===============================================
-    # 2. URDF/Robot Description
+    # 2. Robot Description (necessário para ros2_control)
     # ===============================================
     robot_description_content = Command([
         PathJoinSubstitution([FindExecutable(name="xacro")]),
@@ -42,40 +69,19 @@ def generate_launch_description():
     robot_description = {"robot_description": ParameterValue(robot_description_content, value_type=str)}
     
     # ===============================================
-    # 3. Controller Manager (OBRIGATÓRIO para ROS2 Control!)
+    # 3. Controller Manager
     # ===============================================
     controller_manager = Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[robot_description, robot_controllers, {'use_sim_time': use_sim_time}],
         output="screen",
+        prefix='bash -c "sleep 2; $0 $@"',  # Aguarda robot_description
         respawn=True
     )
     
     # ===============================================
-    # 4. Comando para limpar a memória da ESP32 PWM (reboot)
-    # ===============================================
-    esp_pwm_reboot_command = ExecuteProcess(
-        cmd=[
-            'bash', '-c',
-            'echo "Reiniciando ESP32 dos PWMs..." && '
-            'python3 -c "'
-            'import serial; import time; '
-            'try: '
-            '    ser = serial.Serial(\"/dev/ttyUSB0\", 115200, timeout=1); '
-            '    ser.setDTR(False); time.sleep(0.1); '
-            '    ser.setDTR(True); time.sleep(0.5); '
-            '    ser.close(); '
-            '    print(\"ESP32 PWM reiniciada com sucesso em ttyUSB0\"); '
-            'except Exception as e: '
-            '    print(f\"Erro ao reiniciar ESP32 PWM em ttyUSB0: {e}\")'
-            '"'
-        ],
-        output='screen'
-    )
-    
-    # ===============================================
-    # 5. Hardware Interface Node (PWM)
+    # 4. Hardware Interface Node (ESP32 PWM)
     # ===============================================
     hw_interface_node = Node(
         package='caramelo_bringup',
@@ -83,11 +89,12 @@ def generate_launch_description():
         name='caramelo_hw_interface_node',
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}],
+        prefix='bash -c "sleep 3; $0 $@"',  # Aguarda controller_manager
         respawn=True
     )
     
     # ===============================================
-    # 6. Spawner para Mecanum Drive Controller
+    # 5. Mecanum Drive Controller Spawner
     # ===============================================
     mecanum_drive_controller_spawner = Node(
         package="controller_manager",
@@ -97,7 +104,8 @@ def generate_launch_description():
             "--controller-manager",
             "/controller_manager"
         ],
-        output="screen"
+        output="screen",
+        prefix='bash -c "sleep 5; $0 $@"'  # Aguarda hw_interface
     )
     
     # ===============================================
@@ -108,9 +116,8 @@ def generate_launch_description():
             description='Use simulation (Gazebo) clock if true'
         ),
         
-        # Ordem de inicialização:
-        controller_manager,                      # 1. Controller Manager
-        esp_pwm_reboot_command,                 # 2. Reinicia ESP32 dos PWMs
-        hw_interface_node,                      # 3. Hardware Interface (PWM)
-        mecanum_drive_controller_spawner,       # 4. Mecanum Controller
+        # Ordem de inicialização com delays:
+        controller_manager,                      # 1. Controller Manager (2s delay)
+        hw_interface_node,                      # 2. Hardware Interface (3s delay)
+        mecanum_drive_controller_spawner,       # 3. Mecanum Controller (5s delay)
     ])

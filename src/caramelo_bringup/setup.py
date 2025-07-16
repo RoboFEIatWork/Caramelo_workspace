@@ -32,6 +32,8 @@ setup(
             'odom_tf_publisher_node = caramelo_bringup.odom_tf_publisher_node:main',
             'particle_filter_node = caramelo_bringup.particle_filter_node:main',
             'goal_tester = caramelo_bringup.goal_tester:main',
+            'robust_odometry_node = caramelo_bringup.robust_odometry_node:main',
+            'zed_imu_driver = caramelo_bringup.zed_imu_driver:main',
         ],
     },
 )

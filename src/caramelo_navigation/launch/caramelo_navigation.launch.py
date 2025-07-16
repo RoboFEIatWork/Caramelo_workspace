@@ -55,7 +55,7 @@ def generate_launch_description():
     
     declare_params_file_cmd = DeclareLaunchArgument(
         'params_file',
-        default_value=os.path.join(pkg_nav, 'config', 'nav2_params.yaml'),
+        default_value=os.path.join(pkg_nav, 'config', 'caramelo_nav2.yaml'),
         description='Full path to param file to load'
     )
     
@@ -138,7 +138,25 @@ def generate_launch_description():
         parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
     )
     
-    # 9. Nav2 Lifecycle Manager
+    # 9. Nav2 Smoother Server
+    smoother_server_node = Node(
+        package='nav2_smoother',
+        executable='smoother_server',
+        name='smoother_server',
+        output='screen',
+        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+    )
+    
+    # 10. Nav2 Velocity Smoother
+    velocity_smoother_node = Node(
+        package='nav2_velocity_smoother',
+        executable='velocity_smoother',
+        name='velocity_smoother',
+        output='screen',
+        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+    )
+    
+    # 11. Nav2 Lifecycle Manager
     lifecycle_manager_node = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
@@ -154,7 +172,9 @@ def generate_launch_description():
                 'planner_server',
                 'behavior_server',
                 'bt_navigator',
-                'waypoint_follower'
+                'waypoint_follower',
+                'smoother_server',
+                'velocity_smoother'
             ]
         }]
     )
@@ -163,7 +183,7 @@ def generate_launch_description():
     # INICIALIZAÇÃO E VISUALIZAÇÃO (COM DELAY)
     # ==========================================================================
     
-    # 10. AMCL Initializer (publica pose inicial automaticamente)
+    # 12. AMCL Initializer (publica pose inicial automaticamente)
     amcl_initializer_node = TimerAction(
         period=8.0,  # Aguarda Nav2 inicializar
         actions=[
@@ -303,6 +323,8 @@ def generate_launch_description():
         behavior_server_node,
         bt_navigator_node,
         waypoint_follower_node,
+        smoother_server_node,
+        velocity_smoother_node,
         lifecycle_manager_node,
         safety_filter_node,
         cmd_vel_monitor_node,

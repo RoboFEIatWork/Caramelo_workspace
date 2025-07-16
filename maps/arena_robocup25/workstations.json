@@ -1,0 +1,116 @@
+{
+  "waypoints": [
+    {
+      "name": "START",
+      "x": 0.0,
+      "y": 0.0,
+      "theta": 0.0,
+      "type": "mission_start"
+    },
+    {
+      "name": "FINISH",
+      "x": 0.789,
+      "y": 7.678,
+      "theta": 179.4,
+      "type": "mission_finish"
+    },
+    {
+      "name": "WS01",
+      "x": 1.679,
+      "y": 0.039,
+      "theta": -90.4,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS02",
+      "x": 1.346,
+      "y": 0.454,
+      "theta": 36.0,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS03",
+      "x": 3.01,
+      "y": -0.895,
+      "theta": 0.2,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS04",
+      "x": 4.663,
+      "y": -0.912,
+      "theta": 179.6,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS05",
+      "x": 5.183,
+      "y": 1.229,
+      "theta": -179.9,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS06",
+      "x": 3.429,
+      "y": 1.212,
+      "theta": -1.6,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS07",
+      "x": 2.706,
+      "y": 1.599,
+      "theta": -141.6,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS08",
+      "x": 3.04,
+      "y": 3.123,
+      "theta": 89.9,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS09",
+      "x": 3.0,
+      "y": 4.933,
+      "theta": -89.8,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS10",
+      "x": 4.165,
+      "y": 3.292,
+      "theta": 90.2,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS11",
+      "x": 4.191,
+      "y": 4.92,
+      "theta": -89.3,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS12",
+      "x": 5.337,
+      "y": 7.038,
+      "theta": 38.5,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS13",
+      "x": 3.978,
+      "y": 5.794,
+      "theta": 89.4,
+      "type": "workstation_docking"
+    },
+    {
+      "name": "WS14",
+      "x": 0.883,
+      "y": 6.005,
+      "theta": -179.8,
+      "type": "workstation_docking"
+    }
+  ]
+}

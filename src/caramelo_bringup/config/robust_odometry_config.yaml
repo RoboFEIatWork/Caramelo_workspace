@@ -1,0 +1,50 @@
+# Configuração do Sistema de Odometria Robusta Caramelo
+# Fusão sensorial: ESP32 Encoders + ZED2i IMU + Backup Cinemático
+
+robust_odometry_node:
+  ros__parameters:
+    # =====================================================
+    # PARÂMETROS FÍSICOS DO ROBÔ CARAMELO
+    # =====================================================
+    wheel_radius: 0.05        # Raio das rodas em metros (diâmetro 10cm)
+    wheel_base: 0.47          # Distância entre eixos dianteiro/traseiro 
+    wheel_separation: 0.31    # Distância entre centros das rodas esquerda/direita
+    
+    # =====================================================
+    # CONFIGURAÇÃO DOS ENCODERS ESP32
+    # =====================================================
+    encoder_pulses_per_revolution: 57344  # Pulsos por volta da roda (já com gear box)
+    gear_ratio: 28.0          # Relação de transmissão motor:roda
+    
+    # =====================================================
+    # COMUNICAÇÃO ESP32
+    # =====================================================
+    esp32_port: "/dev/ttyUSB1"     # Porta serial dos encoders
+    esp32_baudrate: 115200         # Taxa de comunicação
+    esp32_timeout: 0.1             # Timeout de leitura serial
+    esp32_timeout_limit: 5.0       # Tempo limite para reconexão automática
+    
+    # =====================================================
+    # FREQUÊNCIAS DO SISTEMA
+    # =====================================================
+    odometry_frequency: 50.0       # Hz - Frequência principal de odometria
+    imu_timeout: 2.0              # Timeout para dados do IMU ZED2i
+    
+    # =====================================================
+    # CONFIGURAÇÃO DO EXTENDED KALMAN FILTER
+    # =====================================================
+    use_imu_orientation: true      # Usar giroscópio para orientação
+    use_imu_acceleration: true     # Usar acelerômetro para validação movimento
+    
+    # Variâncias de ruído dos sensores
+    encoder_noise_variance: 0.01   # Confiança nos encoders ESP32
+    imu_angular_velocity_variance: 0.02   # Confiança no giroscópio ZED2i
+    imu_acceleration_variance: 0.1  # Confiança no acelerômetro ZED2i
+    
+    # =====================================================
+    # BACKUP E RECUPERAÇÃO
+    # =====================================================
+    enable_kinematic_backup: true  # Usar modelo cinemático quando sensores falham
+    backup_cmd_vel_timeout: 1.0    # Tempo para usar última velocidade conhecida
+    auto_recovery_enabled: true    # Reconexão automática de sensores
+    recovery_check_interval: 5.0  # Intervalo de tentativas de reconexão

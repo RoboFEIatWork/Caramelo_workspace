@@ -33,6 +33,7 @@ from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import (Command, LaunchConfiguration,
                                   PathJoinSubstitution)
 from launch_ros.actions import Node
@@ -47,12 +48,23 @@ def generate_launch_description():
     
     # Parâmetros
     arena = LaunchConfiguration('arena')
+    map_file = LaunchConfiguration('map_file')
     
     # Argumentos obrigatórios
     declare_arena_cmd = DeclareLaunchArgument(
         'arena',
         default_value='arena_fei',
         description='Nome da arena (ex: arena_fei, hotel, laboratorio). Map files must exist in maps/[arena]/ folder.')
+    
+    declare_map_file_cmd = DeclareLaunchArgument(
+        'map_file',
+        default_value='',
+        description='Caminho COMPLETO para o arquivo map.yaml (ex: /home/work/Caramelo_workspace/maps/arena_robocup25/map.yaml)')
+    
+    declare_arena_mode_cmd = DeclareLaunchArgument(
+        'arena_mode',
+        default_value='true',
+        description='Usar modo arena (true) ou map_file direto (false)')
     
     # URDF do robô
     urdf_file = os.path.join(caramelo_desc_dir, 'URDF', 'robot.urdf.xacro')
@@ -73,13 +85,13 @@ def generate_launch_description():
         'map.yaml'
     ])
     
-    # 1. Map server
+    # Map server único que escolhe o caminho baseado na condição
     map_server = Node(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
         parameters=[{
-            'yaml_filename': map_file_path,
+            'yaml_filename': map_file,  # Usa map_file diretamente
             'use_sim_time': False
         }],
         output='screen'
@@ -129,13 +141,13 @@ def generate_launch_description():
         output='screen'
     )
     
-    # 6. Interactive Robot Positioner (substitui o transform odom -> base_link)
+    # 6. Interactive Robot Positioner 
     interactive_positioner = Node(
         package='caramelo_navigation',
         executable='interactive_robot_positioner',
         name='interactive_robot_positioner',
         parameters=[{
-            'map_file': map_file_path,
+            'map_file': map_file,  # Usa map_file diretamente
             'map_folder': map_folder_path
         }],
         output='screen'
@@ -159,6 +171,8 @@ def generate_launch_description():
     
     return LaunchDescription([
         declare_arena_cmd,
+        declare_map_file_cmd,
+        declare_arena_mode_cmd,
         map_server,
         lifecycle_manager,
         robot_state_publisher,

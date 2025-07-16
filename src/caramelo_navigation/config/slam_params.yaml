@@ -1,7 +1,7 @@
 slam_toolbox:
   ros__parameters:
 
-    # Plugin params
+    # Plugin params - OTIMIZADO para RPLIDAR S2 + ODOMETRIA ESP32 VIA HUB USB
     solver_plugin: solver_plugins::CeresSolver
     ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
     ceres_preconditioner: SCHUR_JACOBI
@@ -14,61 +14,92 @@ slam_toolbox:
     map_frame: map
     base_frame: base_footprint
     scan_topic: /scan
-    mode: mapping  # ✅ CORRETO: usar mapeamento para criar novo mapa
+    mode: mapping  # MAPEAMENTO + NAVEGAÇÃO SIMULTÂNEA
     
-    # CONFIGURAÇÃO PARA MAPEAMENTO: TF odom->base_footprint vem do encoder
-    publish_odom_tf: false  # Encoder publica TF odom->base_footprint
-    publish_scan_match_odom: false  # Desabilitado - usar apenas odometria do encoder
-    
+    # === CONFIGURAÇÃO ESPECÍFICA RPLIDAR S2 ===
+    # Hardware: RPLIDAR S2 - 10Hz, 0.12° resolução angular, 0.05-30m alcance, ±5cm precisão
+    # Filtro: 90° a 270° (180° setor frontal), ignorando pontos < 5cm
+    # Setup: inverted=true, angle_compensate=true, DenseBoost mode, baudrate=1M
+    publish_odom_tf: false          # ESP32 encoder via HUB USB publica odom->base_footprint
     debug_logging: false
+    throttle_scans: 1               # TODOS os scans - 10Hz do S2 é crucial
+    transform_publish_period: 0.1   # 10Hz - sincronizado exato com S2
+    map_update_interval: 0.1        # 10Hz - atualização em tempo real
+    resolution: 0.025               # 2.5cm - otimizado para precisão ±5cm do S2
+    max_laser_range: 25.0           # 25m - margem segura do alcance 30m do S2
+    min_laser_range: 0.05           # 5cm - respeitando blind range do S2
+    minimum_time_interval: 0.08     # ~12Hz - ligeiramente acima dos 10Hz nativos
     
-    # === CONFIGURAÇÕES PARA RPLIDAR S2 COMO SENSOR DE PROXIMIDADE ===
-    throttle_scans: 1               # Processa TODOS os scans - dados brutos
-    transform_publish_period: 0.02  # 50Hz para map->odom transform
-    map_update_interval: 0.1        # 10Hz - RÁPIDO para ver mapa sendo montado
-    resolution: 0.02                # 2cm por pixel - boa resolução
-    max_laser_range: 30.0           # 30m - alcance máximo do RPLidar S2
-    min_laser_range: 0.05           # 5cm - SENSOR DE PROXIMIDADE (não ignorar < 15cm)
-    minimum_time_interval: 0.05     # 50ms - atualização rápida
-    transform_timeout: 0.2
-    tf_buffer_duration: 30.
-    stack_size_to_use: 40000000
-    enable_interactive_mode: true
-    use_response_expansion: true
-
-    # === SCAN MATCHING SUAVE PARA MAPEAMENTO ESTÁVEL ===
-    use_scan_matching: true
-    use_scan_barycenter: true
-    minimum_travel_distance: 0.2    # 20cm - MENOS agressivo para mapeamento estável
-    minimum_travel_heading: 0.2     # ~11° - MENOS agressivo
-    scan_buffer_size: 10            # Buffer menor para menos correções bruscas
-    scan_buffer_maximum_scan_distance: 20.0  # Limitado para mapeamento local
-    link_match_minimum_response_fine: 0.5    # Mais conservador para evitar correções erradas
-    link_scan_maximum_distance: 0.5          # Correções locais MENOS agressivas
-    loop_search_maximum_distance: 1.0        # Loop closure MUITO restritivo
-    do_loop_closing: false                   # ❌ DESABILITADO durante mapeamento inicial
-    loop_match_minimum_chain_size: 10
-    loop_match_maximum_variance_coarse: 0.8
-    loop_match_minimum_response_coarse: 0.5
-    loop_match_minimum_response_fine: 0.5
-
-    # === PARÂMETROS DE CORRELAÇÃO PARA RPLIDAR S2 ===
-    correlation_search_space_dimension: 0.5  # Área de busca normal
-    correlation_search_space_resolution: 0.01  # Alta precisão
-    correlation_search_space_smear_deviation: 0.1  # Baixa tolerância
-
-    # Correlation Parameters - Loop Closure Parameters
-    loop_search_space_dimension: 8.0
-    loop_search_space_resolution: 0.05
-    loop_search_space_smear_deviation: 0.03
-
-    # === PENALIDADES NORMAIS PARA RPLIDAR S2 ===
-    distance_variance_penalty: 0.5      # Penalidade baixa - confia no RPLidar S2
-    angle_variance_penalty: 1.0         # Penalidade normal    
-
-    fine_search_angle_offset: 0.00349     
-    coarse_search_angle_offset: 0.349   
-    coarse_angle_resolution: 0.0349        
-    minimum_angle_penalty: 0.9
-    minimum_distance_penalty: 0.5
-    use_response_expansion: true
+    # === TOLERÂNCIA CRÍTICA PARA HUB USB COMPARTILHADO ===
+    # ESP32 (encoders) + RPLIDAR S2 + PWM no mesmo HUB USB = delays inevitáveis
+    transform_timeout: 5.0          # ALTO mas realista - compensa delays USB
+    tf_buffer_duration: 30.0        # Buffer grande para delays críticos
+    tf_tolerance: 3.0               # TOLERÂNCIA ALTA para delays USB
+    stack_size_to_use: 40000000     # Memória abundante para buffers
+    
+    # === QUEUE MANAGEMENT PARA EVITAR OVERFLOW ===
+    sync_queue_size: 100            # Queue GRANDE para absorver picos
+    message_timeout: 10.0           # Timeout alto para mensagens lentas
+    laser_max_beams: 0              # 0 = usar todos os beams do RPLIDAR S2
+    laser_max_range: 25.0           # Consistente com max_laser_range
+    
+    # === ANTIFRAGILIDADE TOTAL: QUANTO PIOR A ODOMETRIA, MELHOR O SLAM! ===
+    enable_interactive_mode: false
+    use_scan_matching: true         # CRÍTICO - 100% dependência em scan matching
+    use_scan_barycenter: true       # Centro de massa para estabilidade absoluta
+    minimum_travel_distance: 0.005 # 0.5cm - DETECÇÃO ULTRA-SENSÍVEL de movimento
+    minimum_travel_heading: 0.001  # 0.06° - MICRO-DETECÇÃO angular 
+    scan_buffer_size: 50            # Buffer otimizado para evitar overflow
+    scan_buffer_maximum_scan_distance: 25.0  # Alcance seguro do S2
+    link_match_minimum_response_fine: 0.01   # HIPER-SENSÍVEL para aceitar qualquer match
+    link_scan_maximum_distance: 15.0         # 3/4 do alcance para segurança
+    loop_search_maximum_distance: 20.0       # Busca MÁXIMA para loop closure
+    do_loop_closing: true                     # CRÍTICO - corrige deriva acumulada
+    loop_match_minimum_chain_size: 2         # MÍNIMO para agir rapidamente
+    loop_match_maximum_variance_coarse: 3.0  # TOLERÂNCIA ASTRONÔMICA
+    loop_match_minimum_response_coarse: 0.001 # LIMIAR QUASE ZERO
+    loop_match_minimum_response_fine: 0.001   # LIMIAR QUASE ZERO
+    
+    # === ESTRATÉGIA ANTI-DERIVA: IGNORAR ODOMETRIA COMPLETAMENTE ===
+    use_icp_cloud_matching: true              # Ativar ICP para matching 3D-like
+    use_icp_covariance: false                 # Desativar covariância para velocidade
+    use_const_heading_variance: true          # Força confiança apenas no LIDAR
+    const_heading_variance: 0.001             # Variância baixíssima = confiança total
+    use_const_pose_variance: true             # Força pose apenas do scan matching
+    const_pose_variance: 0.001                # Variância baixíssima = ignora odometria
+    
+    # === CORRELAÇÃO EXTREMA PARA COMPENSAR ODOMETRIA PERDIDA ===
+    correlation_search_space_dimension: 3.0  # Busca ÉPICA para delays massivos
+    correlation_search_space_resolution: 0.01  # Resolução FINA para precisão
+    correlation_search_space_smear_deviation: 0.08  # TOLERANTE dentro dos limites válidos
+    loop_search_space_dimension: 30.0        # Busca GLOBAL para loop closure
+    loop_search_space_resolution: 0.03       # Resolução equilibrada
+    loop_search_space_smear_deviation: 0.08  # Tolerância máxima dentro dos limites
+    distance_variance_penalty: 0.001         # QUASE ZERO - odometria não confiável
+    angle_variance_penalty: 0.001            # QUASE ZERO - odometria não confiável
+    
+    # === MODO SCAN-ONLY: ODOMETRIA É APENAS SUGESTÃO ===
+    use_scan_matching_velocity: true          # Calcular velocidade pelo scan
+    scan_match_velocity_minimum_response: 0.001  # Aceitar qualquer match para velocidade
+    max_pose_search_dist: 5.0                 # Máxima busca para pose correta
+    
+    # === OTIMIZAÇÃO ANGULAR PARA RPLIDAR S2 FILTRADO ===
+    # Filtro usa 90°-270° = 180° úteis com resolução 0.12°
+    # 180° / 0.12° = 1500 pontos teóricos, filtro mantém ~750 pontos centrais
+    fine_search_angle_offset: 0.002094       # 0.12° resolução nativa S2
+    coarse_search_angle_offset: 0.02094      # 1.2° - busca inicial ampla
+    coarse_angle_resolution: 0.006283        # 0.36° - 3x resolução nativa
+    minimum_angle_penalty: 0.05              # MUITO BAIXO - S2 é preciso
+    minimum_distance_penalty: 0.025          # Igual à precisão ±2.5cm esperada
+    use_response_expansion: true              # Expansão para melhor matching
+    
+    # === PARÂMETROS CRÍTICOS PARA SISTEMA USB COMPARTILHADO ===
+    maximum_time_to_get_pose: 5.0      # Timeout ALTO mas realista para delays USB
+    publish_scan_match_odom: false      # NÃO sobrescrever odometria ESP32
+    
+    # === OTIMIZAÇÕES ESPECÍFICAS PARA AMBIENTE REAL ===
+    # Considerando arena com obstáculos, paredes, e necessidade de navegação contínua
+    map_file_name: /home/work/Caramelo_workspace/maps/arena_robocup25/map
+    map_start_at_dock: true
+    minimum_travel_threshold: 0.01     # 1cm - detecta qualquer movimento
+    scan_matching_min_distance: 0.01   # 1cm - matching contínuo

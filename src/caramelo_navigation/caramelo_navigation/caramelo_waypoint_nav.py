@@ -25,6 +25,8 @@ from rclpy.action import ActionClient
 from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.time import Time
+from std_msgs.msg import ColorRGBA
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class CarameloWaypointNav(Node):
@@ -36,16 +38,25 @@ class CarameloWaypointNav(Node):
         self.declare_parameter('waypoints_file', '/home/work/Caramelo_workspace/maps/arena_fei/waypoints.json')
         self.declare_parameter('auto_start', True)
         self.declare_parameter('publish_initial_pose', True)
+        self.declare_parameter('slam_mode', False)  # NOVO: modo SLAM
         
         self.mission_file = self.get_parameter('mission_file').get_parameter_value().string_value
         self.waypoints_file = self.get_parameter('waypoints_file').get_parameter_value().string_value
         self.auto_start = self.get_parameter('auto_start').get_parameter_value().bool_value
         self.publish_pose = self.get_parameter('publish_initial_pose').get_parameter_value().bool_value
+        self.slam_mode = self.get_parameter('slam_mode').get_parameter_value().bool_value
         
         # Publishers
         self.initial_pose_pub = self.create_publisher(
             PoseWithCovarianceStamped, 
             '/initialpose', 
+            10
+        )
+        
+        # Publisher para marcadores de waypoints no RViz
+        self.marker_pub = self.create_publisher(
+            MarkerArray,
+            '/waypoint_markers',
             10
         )
         
@@ -64,6 +75,7 @@ class CarameloWaypointNav(Node):
         self.amcl_ready = False
         self.localization_corrected = False  # Flag para correção de localização
         self.initial_pose_verified = False   # Flag para verificação de pose inicial
+        self.navigation_start_time = None    # Para timeout de inicialização
         
         # Publisher para pose inicial (correção automática)
         self.pose_publisher = self.create_publisher(
@@ -88,6 +100,9 @@ class CarameloWaypointNav(Node):
         
         # Timer para inicialização
         self.init_timer = self.create_timer(2.0, self.initialize_navigation)
+        
+        # Timer de timeout para forçar início da missão após 15 segundos
+        self.timeout_timer = self.create_timer(15.0, self.force_start_mission)
     
     def load_waypoints_database(self):
         """Carrega waypoints do arquivo waypoints.json (suporte ao novo formato)"""
@@ -216,6 +231,9 @@ class CarameloWaypointNav(Node):
             self.get_logger().info(f"🏁 Pose inicial (START): {self.initial_pose_waypoint['name']}")
         else:
             self.get_logger().warn("⚠️ Nenhuma pose START definida - usando pose atual do robô")
+        
+        # Publica marcadores dos waypoints no RViz
+        self.publish_waypoint_markers()
     
     def load_mission_by_coordinates(self, waypoints_list):
         """Carrega missão usando coordenadas diretas (formato antigo)"""
@@ -233,6 +251,9 @@ class CarameloWaypointNav(Node):
         self.get_logger().info(f"🎯 Missão por COORDENADAS: {len(self.waypoints)} waypoints")
         for i, wp in enumerate(self.waypoints):
             self.get_logger().info(f"   WP{i+1} '{wp['name']}': x={wp['x']:.2f}, y={wp['y']:.2f}")
+        
+        # Publica marcadores dos waypoints no RViz
+        self.publish_waypoint_markers()
     
     def quaternion_to_yaw(self, x, y, z, w):
         """Converte quaternion para yaw (radianos)"""
@@ -417,8 +438,119 @@ class CarameloWaypointNav(Node):
             self.create_timer(20.0, self.wait_complete_callback)
             
         else:
-            self.get_logger().error(f"❌ Falha ao alcançar '{wp_name}'")
+            self.get_logger().error(f"❌ Falha ao alcançar '{wp_name}' - tentando estratégia de recuperação...")
+            
+            # 🔄 ESTRATÉGIA DE RECUPERAÇÃO: Tentar alcançar ponto mais próximo possível
+            self.attempt_waypoint_recovery()
+            
+    def attempt_waypoint_recovery(self):
+        """Tenta estratégias de recuperação para waypoint inacessível"""
+        if self.current_waypoint >= len(self.waypoints):
+            return
+            
+        waypoint = self.waypoints[self.current_waypoint]
+        wp_name = waypoint.get('name', f'WP{self.current_waypoint + 1}')
+        
+        self.get_logger().info(f"🔄 Tentando recuperação para waypoint '{wp_name}'...")
+        
+        # Estratégia 1: Tentar pontos ao redor do waypoint original
+        recovery_points = [
+            {'x': waypoint['x'] + 0.3, 'y': waypoint['y'], 'yaw': waypoint['yaw']},      # 30cm à direita
+            {'x': waypoint['x'] - 0.3, 'y': waypoint['y'], 'yaw': waypoint['yaw']},      # 30cm à esquerda  
+            {'x': waypoint['x'], 'y': waypoint['y'] + 0.3, 'yaw': waypoint['yaw']},      # 30cm para frente
+            {'x': waypoint['x'], 'y': waypoint['y'] - 0.3, 'yaw': waypoint['yaw']},      # 30cm para trás
+            {'x': waypoint['x'] + 0.5, 'y': waypoint['y'] + 0.5, 'yaw': waypoint['yaw']}, # diagonal
+            {'x': waypoint['x'] - 0.5, 'y': waypoint['y'] - 0.5, 'yaw': waypoint['yaw']}, # diagonal oposta
+        ]
+        
+        # Tenta o primeiro ponto de recuperação
+        self.try_recovery_point(recovery_points, 0, wp_name)
+        
+    def try_recovery_point(self, recovery_points, point_index, original_wp_name):
+        """Tenta navegar para um ponto de recuperação específico"""
+        if point_index >= len(recovery_points):
+            # Todas as tentativas falharam, pula este waypoint
+            self.get_logger().warn(f"⚠️ Todas as tentativas de recuperação falharam para '{original_wp_name}'. Pulando waypoint...")
+            self.skip_current_waypoint()
+            return
+            
+        recovery_point = recovery_points[point_index]
+        
+        self.get_logger().info(f"🎯 Tentativa {point_index + 1}/6: Navegando para ponto de recuperação próximo a '{original_wp_name}'")
+        self.get_logger().info(f"   -> x={recovery_point['x']:.2f}, y={recovery_point['y']:.2f}")
+        
+        # Cria pose goal para ponto de recuperação
+        goal_pose = PoseStamped()
+        goal_pose.header.frame_id = 'map'
+        goal_pose.header.stamp = self.get_clock().now().to_msg()
+        
+        goal_pose.pose.position.x = float(recovery_point['x'])
+        goal_pose.pose.position.y = float(recovery_point['y'])
+        goal_pose.pose.position.z = 0.0
+        
+        # Conversão de yaw para quaternion
+        yaw = float(recovery_point['yaw'])
+        goal_pose.pose.orientation.x = 0.0
+        goal_pose.pose.orientation.y = 0.0
+        goal_pose.pose.orientation.z = math.sin(yaw / 2.0)
+        goal_pose.pose.orientation.w = math.cos(yaw / 2.0)
+        
+        # Cria goal action
+        goal_msg = NavigateToPose.Goal()
+        goal_msg.pose = goal_pose
+        
+        # Envia goal com callback específico para recuperação
+        future = self.nav_client.send_goal_async(goal_msg)
+        future.add_done_callback(lambda f: self.recovery_navigation_response(f, recovery_points, point_index, original_wp_name))
+        
+    def recovery_navigation_response(self, future, recovery_points, point_index, original_wp_name):
+        """Callback de resposta da navegação de recuperação"""
+        goal_handle = future.result()
+        
+        if not goal_handle.accepted:
+            self.get_logger().warn(f"⚠️ Ponto de recuperação {point_index + 1} rejeitado, tentando próximo...")
+            self.try_recovery_point(recovery_points, point_index + 1, original_wp_name)
+            return
+        
+        self.get_logger().info(f"✅ Ponto de recuperação {point_index + 1} aceito")
+        
+        # Aguarda resultado da recuperação
+        result_future = goal_handle.get_result_async()
+        result_future.add_done_callback(lambda f: self.recovery_navigation_result(f, recovery_points, point_index, original_wp_name))
+        
+    def recovery_navigation_result(self, future, recovery_points, point_index, original_wp_name):
+        """Callback de resultado da navegação de recuperação"""
+        result = future.result().result
+        
+        if result:
+            self.get_logger().info(f"🎉 Recuperação bem-sucedida! Chegou próximo ao waypoint '{original_wp_name}'")
+            # Considera como sucesso e continua
+            self.get_logger().info(f"⏳ Aguardando 20 segundos no ponto de recuperação...")
+            self.create_timer(20.0, self.wait_complete_callback)
+        else:
+            self.get_logger().warn(f"❌ Ponto de recuperação {point_index + 1} falhou, tentando próximo...")
+            self.try_recovery_point(recovery_points, point_index + 1, original_wp_name)
+            
+    def skip_current_waypoint(self):
+        """Pula o waypoint atual e continua para o próximo"""
+        if self.current_waypoint >= len(self.waypoints):
+            return
+            
+        wp_name = self.waypoints[self.current_waypoint].get('name', f'WP{self.current_waypoint + 1}')
+        self.get_logger().warn(f"⏭️ Pulando waypoint '{wp_name}' - considerado inacessível")
+        
+        # Avança para próximo waypoint
+        self.current_waypoint += 1
+        
+        # Verifica se há mais waypoints
+        if self.current_waypoint >= len(self.waypoints):
+            self.get_logger().info("🏁 MISSÃO COMPLETA! Todos os waypoints processados.")
             self.mission_active = False
+            return
+        
+        # Continua para próximo waypoint após pequena pausa
+        self.get_logger().info("🔄 Continuando para próximo waypoint...")
+        self.create_timer(3.0, self.navigate_to_next_waypoint_delayed)
             
     def wait_complete_callback(self):
         """Callback chamado após espera no waypoint"""
@@ -469,24 +601,29 @@ class CarameloWaypointNav(Node):
     def pose_callback(self, msg):
         """Callback para receber pose atual do AMCL"""
         if not self.initial_pose_verified and not self.mission_active:
-            # Verifica se a pose está próxima da origem (START)
+            # Verifica se AMCL está fornecendo uma pose válida (não zero)
             current_x = msg.pose.pose.position.x
             current_y = msg.pose.pose.position.y
             
-            # Tolerância para considerar que está na origem
-            tolerance = 0.3  # 30cm
+            # Verifica se a covariância está baixa (localização estável)
+            cov = msg.pose.covariance
+            position_uncertainty = (cov[0] + cov[7])  # xx + yy diagonal elements
             
-            if abs(current_x) < tolerance and abs(current_y) < tolerance:
-                self.get_logger().info(f"✅ Pose inicial verificada: ({current_x:.3f}, {current_y:.3f})")
+            # MUITO RELAXADO: aceita qualquer localização razoável do AMCL
+            if position_uncertainty < 2.0:  # Muito mais tolerante - aceita localização "boa o suficiente"
+                self.get_logger().info(f"✅ Localização aceitável detectada: pose=({current_x:.3f}, {current_y:.3f}), uncertainty={position_uncertainty:.3f}")
                 self.initial_pose_verified = True
+                self.localization_corrected = True
                 
-                # Se já fez correção de localização, pode iniciar missão
-                if self.localization_corrected:
-                    self.start_mission_after_localization()
+                # Cancela timeout timer se ainda existe
+                if hasattr(self, 'timeout_timer'):
+                    self.timeout_timer.cancel()
+                    self.timeout_timer.destroy()
+                
+                # Pode iniciar missão diretamente
+                self.start_mission_after_localization()
             else:
-                self.get_logger().warn(f"⚠️ Pose atual ({current_x:.3f}, {current_y:.3f}) não está na origem!")
-                # Automaticamente corrige a pose para (0,0,0)
-                self.correct_initial_pose()
+                self.get_logger().info(f"🔄 Aguardando localização melhorar: pose=({current_x:.3f}, {current_y:.3f}), uncertainty={position_uncertainty:.3f} (limite: 2.0)", throttle_duration_sec=3.0)
     
     def correct_initial_pose(self):
         """Corrige automaticamente a pose inicial para (0,0,0)"""
@@ -557,6 +694,110 @@ class CarameloWaypointNav(Node):
             else:
                 self.get_logger().warn("⚠️ Nenhum waypoint para navegar após remoção do START")
     
+    def publish_waypoint_markers(self):
+        """Publica marcadores de waypoints para visualização no RViz"""
+        marker_array = MarkerArray()
+        
+        for i, waypoint in enumerate(self.waypoints):
+            # Marcador de posição (esfera)
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = self.get_clock().now().to_msg()
+            marker.ns = "waypoints"
+            marker.id = i * 2  # IDs pares para posições
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            
+            # Posição
+            marker.pose.position.x = float(waypoint['x'])
+            marker.pose.position.y = float(waypoint['y'])
+            marker.pose.position.z = 0.1
+            
+            # Orientação (neutra para esfera)
+            marker.pose.orientation.w = 1.0
+            
+            # Tamanho
+            marker.scale.x = 0.3
+            marker.scale.y = 0.3
+            marker.scale.z = 0.3
+            
+            # Cor baseada no tipo de waypoint
+            name = waypoint.get('name', 'WP')
+            if 'START' in name:
+                marker.color = ColorRGBA(r=0.0, g=1.0, b=0.0, a=1.0)  # Verde
+            elif 'FINISH' in name:
+                marker.color = ColorRGBA(r=1.0, g=0.0, b=0.0, a=1.0)  # Vermelho
+            elif 'WS' in name:
+                marker.color = ColorRGBA(r=0.0, g=0.0, b=1.0, a=1.0)  # Azul
+            else:
+                marker.color = ColorRGBA(r=1.0, g=1.0, b=0.0, a=1.0)  # Amarelo
+            
+            marker_array.markers.append(marker)
+            
+            # Marcador de texto (nome do waypoint)
+            text_marker = Marker()
+            text_marker.header = marker.header
+            text_marker.ns = "waypoint_labels"
+            text_marker.id = i * 2 + 1  # IDs ímpares para textos
+            text_marker.type = Marker.TEXT_VIEW_FACING
+            text_marker.action = Marker.ADD
+            
+            # Posição ligeiramente acima da esfera
+            text_marker.pose.position.x = float(waypoint['x'])
+            text_marker.pose.position.y = float(waypoint['y'])
+            text_marker.pose.position.z = 0.4
+            text_marker.pose.orientation.w = 1.0
+            
+            # Tamanho do texto
+            text_marker.scale.z = 0.2
+            
+            # Cor do texto (branco)
+            text_marker.color = ColorRGBA(r=1.0, g=1.0, b=1.0, a=1.0)
+            
+            # Texto
+            text_marker.text = name
+            
+            marker_array.markers.append(text_marker)
+        
+        # Publica todos os marcadores
+        self.marker_pub.publish(marker_array)
+        self.get_logger().info(f"📍 Publicados {len(self.waypoints)} waypoints como marcadores no RViz")
+    
+    def clear_waypoint_markers(self):
+        """Remove todos os marcadores de waypoints do RViz"""
+        marker_array = MarkerArray()
+        
+        # Cria marcadores de deletar para todos os IDs
+        for i in range(len(self.waypoints) * 2):
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = self.get_clock().now().to_msg()
+            marker.ns = "waypoints" if i % 2 == 0 else "waypoint_labels"
+            marker.id = i
+            marker.action = Marker.DELETE
+            marker_array.markers.append(marker)
+        
+        self.marker_pub.publish(marker_array)
+    
+    def force_start_mission(self):
+        """Força o início da missão após timeout, mesmo sem localização perfeita"""
+        if not self.mission_active:
+            self.get_logger().warn("⏰ TIMEOUT (15s): Forçando início da missão sem localização perfeita!")
+            self.get_logger().info("   -> AMCL pode estar com covariância alta, mas o sistema continuará...")
+            
+            # Cancela o timer de timeout
+            if hasattr(self, 'timeout_timer'):
+                self.timeout_timer.cancel()
+                self.timeout_timer.destroy()
+            
+            # Marca como verificado para permitir início
+            self.initial_pose_verified = True
+            self.localization_corrected = True
+            
+            # Inicia a missão
+            self.start_mission_after_localization()
+
+
 def main(args=None):
     """Função principal para iniciar o node de navegação por waypoints"""
     rclpy.init(args=args)

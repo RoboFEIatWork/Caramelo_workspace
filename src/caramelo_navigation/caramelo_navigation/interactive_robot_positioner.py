@@ -12,8 +12,9 @@ from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import (PointStamped, PoseStamped,
                                PoseWithCovarianceStamped, TransformStamped)
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import ColorRGBA, String
 from tf2_ros import TransformBroadcaster
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class InteractiveRobotPositioner(Node):
@@ -85,8 +86,14 @@ class InteractiveRobotPositioner(Node):
         # Publisher para comandos de teclado (opcional)
         self.command_pub = self.create_publisher(String, '/robot_command', 10)
         
+        # Publisher para mostrar robot radius e inflation no RViz
+        self.robot_viz_pub = self.create_publisher(MarkerArray, '/robot_visualization', 10)
+        
         # Timer para publicar TF do robô
         self.tf_timer = self.create_timer(0.1, self.publish_robot_tf)
+        
+        # Timer para publicar visualização do robô
+        self.viz_timer = self.create_timer(0.5, self.publish_robot_visualization)
         
         # Carregar waypoints existentes
         self.load_existing_waypoints()
@@ -202,6 +209,81 @@ class InteractiveRobotPositioner(Node):
         t.transform.rotation.w = math.cos(self.robot_yaw / 2.0)
         
         self.tf_broadcaster.sendTransform(t)
+        
+    def publish_robot_visualization(self):
+        """Publica marcadores para mostrar robot radius e inflation no RViz"""
+        marker_array = MarkerArray()
+        
+        # Marcador 1: Robot radius (círculo sólido vermelho)
+        robot_marker = Marker()
+        robot_marker.header.frame_id = "map"
+        robot_marker.header.stamp = self.get_clock().now().to_msg()
+        robot_marker.ns = "robot_footprint"
+        robot_marker.id = 0
+        robot_marker.type = Marker.CYLINDER
+        robot_marker.action = Marker.ADD
+        robot_marker.pose.position.x = self.robot_x
+        robot_marker.pose.position.y = self.robot_y
+        robot_marker.pose.position.z = 0.05  # Ligeiramente acima do chão
+        robot_marker.pose.orientation.w = 1.0
+        robot_marker.scale.x = 0.74  # Diâmetro = 2 * 0.37m radius
+        robot_marker.scale.y = 0.74
+        robot_marker.scale.z = 0.1   # Altura do cilindro
+        robot_marker.color.r = 1.0   # Vermelho
+        robot_marker.color.g = 0.0
+        robot_marker.color.b = 0.0
+        robot_marker.color.a = 0.7   # Semi-transparente
+        robot_marker.lifetime.sec = 1
+        
+        # Marcador 2: Inflation layer (círculo transparente azul)
+        inflation_marker = Marker()
+        inflation_marker.header.frame_id = "map"
+        inflation_marker.header.stamp = self.get_clock().now().to_msg()
+        inflation_marker.ns = "inflation_layer"
+        inflation_marker.id = 1
+        inflation_marker.type = Marker.CYLINDER
+        inflation_marker.action = Marker.ADD
+        inflation_marker.pose.position.x = self.robot_x
+        inflation_marker.pose.position.y = self.robot_y
+        inflation_marker.pose.position.z = 0.02  # Abaixo do robot
+        inflation_marker.pose.orientation.w = 1.0
+        inflation_marker.scale.x = 0.84  # Robot radius + inflation (0.37 + 0.05) * 2
+        inflation_marker.scale.y = 0.84
+        inflation_marker.scale.z = 0.05
+        inflation_marker.color.r = 0.0
+        inflation_marker.color.g = 0.5  # Azul escuro
+        inflation_marker.color.b = 1.0
+        inflation_marker.color.a = 0.3   # Muito transparente
+        inflation_marker.lifetime.sec = 1
+        
+        # Marcador 3: Seta indicando orientação
+        arrow_marker = Marker()
+        arrow_marker.header.frame_id = "map"
+        arrow_marker.header.stamp = self.get_clock().now().to_msg()
+        arrow_marker.ns = "robot_orientation"
+        arrow_marker.id = 2
+        arrow_marker.type = Marker.ARROW
+        arrow_marker.action = Marker.ADD
+        arrow_marker.pose.position.x = self.robot_x
+        arrow_marker.pose.position.y = self.robot_y
+        arrow_marker.pose.position.z = 0.1
+        arrow_marker.pose.orientation.x = 0.0
+        arrow_marker.pose.orientation.y = 0.0
+        arrow_marker.pose.orientation.z = math.sin(self.robot_yaw / 2.0)
+        arrow_marker.pose.orientation.w = math.cos(self.robot_yaw / 2.0)
+        arrow_marker.scale.x = 0.5   # Comprimento da seta
+        arrow_marker.scale.y = 0.05  # Largura da seta
+        arrow_marker.scale.z = 0.05  # Altura da seta
+        arrow_marker.color.r = 0.0
+        arrow_marker.color.g = 1.0   # Verde
+        arrow_marker.color.b = 0.0
+        arrow_marker.color.a = 0.9
+        arrow_marker.lifetime.sec = 1
+        
+        # Adicionar marcadores ao array
+        marker_array.markers = [robot_marker, inflation_marker, arrow_marker]
+        
+        self.robot_viz_pub.publish(marker_array)
         
     def save_workstation_waypoint(self, waypoint):
         """Salva waypoint de workstation no formato simplificado para competição"""

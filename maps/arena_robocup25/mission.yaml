@@ -1,0 +1,7 @@
+mission:
+  waypoint_sequence:
+    - "START"
+    - "WS01" 
+    - "WS02"
+    - "WS03"
+    - "FINISH"
