@@ -1,5 +1,5 @@
 # Configuração do Sistema de Odometria Robusta Caramelo
-# Fusão sensorial: ESP32 Encoders + ZED2i IMU + Backup Cinemático
+# Fusão sensorial: ROS Topics (joint_states + IMU) + Backup Cinemático
 
 robust_odometry_node:
   ros__parameters:
@@ -11,24 +11,25 @@ robust_odometry_node:
     wheel_separation: 0.31    # Distância entre centros das rodas esquerda/direita
     
     # =====================================================
-    # CONFIGURAÇÃO DOS ENCODERS ESP32
+    # CONFIGURAÇÃO DOS ENCODERS (via ROS Topics)
     # =====================================================
     encoder_pulses_per_revolution: 57344  # Pulsos por volta da roda (já com gear box)
     gear_ratio: 28.0          # Relação de transmissão motor:roda
     
     # =====================================================
-    # COMUNICAÇÃO ESP32
+    # TÓPICOS ROS (NÃO conecta diretamente ao hardware)
     # =====================================================
-    esp32_port: "/dev/ttyUSB1"     # Porta serial dos encoders
-    esp32_baudrate: 115200         # Taxa de comunicação
-    esp32_timeout: 0.1             # Timeout de leitura serial
-    esp32_timeout_limit: 5.0       # Tempo limite para reconexão automática
+    use_hardware_direct: false     # LER DADOS DO ROS, não do hardware
+    joint_states_topic: "/joint_states"    # ESP32 encoders via ROS
+    imu_topic: "/zed/zed_node/imu/data"    # ZED2i IMU via ROS
+    cmd_vel_topic: "/cmd_vel"              # Comandos de velocidade
     
     # =====================================================
     # FREQUÊNCIAS DO SISTEMA
     # =====================================================
     odometry_frequency: 50.0       # Hz - Frequência principal de odometria
-    imu_timeout: 2.0              # Timeout para dados do IMU ZED2i
+    joint_states_timeout: 2.0      # Timeout para /joint_states
+    imu_timeout: 2.0               # Timeout para dados do IMU ZED2i
     
     # =====================================================
     # CONFIGURAÇÃO DO EXTENDED KALMAN FILTER
@@ -37,7 +38,7 @@ robust_odometry_node:
     use_imu_acceleration: true     # Usar acelerômetro para validação movimento
     
     # Variâncias de ruído dos sensores
-    encoder_noise_variance: 0.01   # Confiança nos encoders ESP32
+    encoder_noise_variance: 0.01   # Confiança nos encoders (via joint_states)
     imu_angular_velocity_variance: 0.02   # Confiança no giroscópio ZED2i
     imu_acceleration_variance: 0.1  # Confiança no acelerômetro ZED2i
     
@@ -46,5 +47,5 @@ robust_odometry_node:
     # =====================================================
     enable_kinematic_backup: true  # Usar modelo cinemático quando sensores falham
     backup_cmd_vel_timeout: 1.0    # Tempo para usar última velocidade conhecida
-    auto_recovery_enabled: true    # Reconexão automática de sensores
-    recovery_check_interval: 5.0  # Intervalo de tentativas de reconexão
+    auto_recovery_enabled: true    # Reconexão automática de tópicos
+    recovery_check_interval: 5.0  # Intervalo de verificação de tópicos

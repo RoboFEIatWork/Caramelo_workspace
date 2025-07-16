@@ -61,9 +61,13 @@ def generate_launch_description():
         ]),
         launch_arguments={
             'camera_model': camera_model,
-            'publish_tf': 'false',           # Não publicar TF - deixar para odometria
-            'publish_imu_tf': 'true',        # Publicar TF do IMU
+            'publish_tf': 'false',           # Não publicar TF - deixar para URDF
+            'publish_imu_tf': 'false',       # Não publicar TF do IMU - deixar para URDF
+            'publish_map_tf': 'false',       # Não publicar map TF
             'base_frame': 'base_footprint',  # Frame base do robô
+            'camera_name': 'zed',            # Nome do namespace
+            'camera_frame': 'zed_camera',    # Frame da câmera (do URDF)
+            'imu_frame': 'zed_camera_imu_link', # Frame do IMU (do URDF)
             'camera_name': 'zed',            # Nome do namespace
             'sensors_image_sync': 'false',   # Desabilitar sync de imagem
             'depth_mode': 'NONE',            # SEM processamento de depth

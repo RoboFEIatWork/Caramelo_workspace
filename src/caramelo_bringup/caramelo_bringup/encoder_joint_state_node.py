@@ -92,7 +92,7 @@ class EncoderJointStateNode(Node):
         self.get_logger().info('Display estático será iniciado...')
 
     def setup_serial_connection(self):
-        """Configura conexão serial com a ESP32 dos encoders"""
+        """Configura conexão serial com a ESP32 dos encoders - APENAS NA INICIALIZAÇÃO"""
         try:
             # BACKUP da odometria antes de reset (CRÍTICO para SLAM!)
             odometry_backup = None
@@ -115,8 +115,8 @@ class EncoderJointStateNode(Node):
             self.serial_port = serial.Serial(self.serial_port_name, baudrate=self.serial_baudrate, timeout=0.1)
             self.get_logger().info(f"📊 ESP32 dos encoders conectada em {self.serial_port_name}")
             
-            # Hard Reset da ESP32 para limpar memória
-            self.get_logger().info("🔄 Fazendo hard reset da ESP32 dos encoders...")
+            # Hard Reset da ESP32 para limpar memória - APENAS NA INICIALIZAÇÃO
+            self.get_logger().info("🔄 Fazendo hard reset da ESP32 dos encoders... (INICIALIZAÇÃO)")
             self.serial_port.dtr = False
             time.sleep(0.1)
             self.serial_port.dtr = True
@@ -145,6 +145,32 @@ class EncoderJointStateNode(Node):
             self.get_logger().error(f"❌ Falha ao conectar ESP32 dos encoders em {self.serial_port_name}: {e}")
             self.get_logger().warn(f"🔍 Verifique se a ESP32 dos encoders está conectada em {self.serial_port_name}")
             self.get_logger().warn(f"🔍 Verifique as permissões: sudo chmod 777 {self.serial_port_name}")
+            self.connection_established = False
+
+    def reconnect_serial(self):
+        """Reconecta serial SEM reset - PRESERVA ODOMETRIA DURANTE NAVEGAÇÃO"""
+        try:
+            self.get_logger().warn("🔄 Reconectando ESP32 SEM reset (preservando odometria)...")
+            
+            # Fechar qualquer conexão anterior
+            if hasattr(self, 'serial_port') and self.serial_port.is_open:
+                self.serial_port.close()
+                time.sleep(0.2)
+            
+            # Reconectar na porta configurada SEM reset
+            self.serial_port = serial.Serial(self.serial_port_name, baudrate=self.serial_baudrate, timeout=0.1)
+            self.get_logger().info(f"📊 ESP32 dos encoders reconectada em {self.serial_port_name}")
+            
+            # Limpar apenas buffers (SEM reset da ESP32)
+            self.serial_port.reset_input_buffer()
+            self.serial_port.reset_output_buffer()
+            time.sleep(0.1)  # Pausa mínima
+            
+            self.get_logger().info("✅ ESP32 reconectada SEM perder odometria!")
+            self.connection_established = True
+            
+        except Exception as e:
+            self.get_logger().error(f"❌ Falha ao reconectar ESP32 em {self.serial_port_name}: {e}")
             self.connection_established = False
 
     def display_static_info(self):
@@ -305,8 +331,10 @@ class EncoderJointStateNode(Node):
             self.get_logger().debug(f'Erro de parsing JSON: {e}')
         except Exception as e:
             self.get_logger().warn(f'Erro ao ler/processar dados dos encoders: {e}')
-            # Tentar reconectar em caso de erro
-            self.setup_serial_connection()
+            # USAR BACKUP de odometria durante falha
+            self.get_logger().warn(f"💾 BACKUP odometria: x={self.x:.3f}, y={self.y:.3f}, θ={math.degrees(self.theta):.1f}°")
+            # Tentar reconectar SEM reset (preserva odometria)
+            self.reconnect_serial()
 
     def publish_joint_states(self, timestamp):
         """Publica estados dos joints das rodas"""
