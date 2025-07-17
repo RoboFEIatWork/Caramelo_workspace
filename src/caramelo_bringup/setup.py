@@ -26,13 +26,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'caramelo_hw_interface_node = caramelo_bringup.caramelo_hw_interface_node:main',
-            'encoder_joint_state_node = caramelo_bringup.encoder_joint_state_node:main',
+            # Novos nós modulares (arquitetura atualizada)
+            'encoder_reader_node = caramelo_bringup.encoder_reader_node:main',
+            'odometry_fusion_node = caramelo_bringup.odometry_fusion_node:main',
+            'pwm_controller_node = caramelo_bringup.pwm_controller_node:main',
+            
+            # Nós de utilidade mantidos
             'twist_converter_node = caramelo_bringup.twist_converter_node:main',
-            'odom_tf_publisher_node = caramelo_bringup.odom_tf_publisher_node:main',
-            'particle_filter_node = caramelo_bringup.particle_filter_node:main',
-            'goal_tester = caramelo_bringup.goal_tester:main',
-            'robust_odometry_node = caramelo_bringup.robust_odometry_node:main',
             'zed_imu_driver = caramelo_bringup.zed_imu_driver:main',
         ],
     },

@@ -1,0 +1,29 @@
+# =====================================================
+# CONFIGURAÇÃO SIMPLIFICADA - CARAMELO BRINGUP
+# =====================================================
+
+# Leitor de Encoders ESP32 - Raw Data Only
+encoder_reader_node:
+  ros__parameters:
+    serial_port: "/dev/ttyUSB1"
+    serial_baudrate: 115200
+    update_frequency: 50.0
+    reconnect_timeout: 5.0
+
+# Fusão de Odometria - Encoders + IMU ZED
+odometry_fusion_node:
+  ros__parameters:
+    # Parâmetros físicos do robô
+    wheel_radius: 0.05        # metros
+    wheel_base: 0.47          # metros (distância frente-trás)
+    wheel_separation: 0.31    # metros (distância esquerda-direita)
+    
+    # Parâmetros dos encoders
+    encoder_pulses_per_revolution: 57344
+    gear_ratio: 28.0
+    
+    # Fusão sensorial
+    imu_weight: 0.8           # Peso da IMU na orientação
+    encoder_weight: 0.2       # Peso dos encoders na orientação
+    fallback_timeout: 2.0     # segundos para modo fallback
+    orientation_filter_alpha: 0.98  # Filtro complementar

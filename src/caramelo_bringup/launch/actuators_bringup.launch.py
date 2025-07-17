@@ -4,27 +4,38 @@ ACTUATORS BRINGUP - Sistema de Atuadores do Robô Caramelo
 
 ATUADORES CONTROLADOS:
 ======================
-1. ESP32 PWM - Controle das 4 rodas mecanum
+1. PWM Controller Node - Controle PWM das 4 rodas mecanum via ESP32
 2. Controller Manager - ROS2 Control
 3. Mecanum Drive Controller - Plugin de controle
+
+COMUNICAÇÃO:
+============
+- ESP32 PWM em /dev/ttyUSB0 (pwm_controller_node)
+- ros2_control interface para navegação
 
 TÓPICOS SUBSCRITOS:
 ==================
 - /cmd_vel (geometry_msgs/Twist) - Comandos de velocidade
+- /mecanum_controller/commands (Float64MultiArray) - Comandos diretos
 
 TÓPICOS PUBLICADOS:
 ==================
-- /joint_states (sensor_msgs/JointState) - Estados dos joints
-- /mecanum_drive_controller/cmd_vel - Comandos convertidos
+- /motor_status (std_msgs/Bool) - Status da conexão ESP32
 
 USO:
 ====
 ros2 launch caramelo_bringup actuators_bringup.launch.py
 
+⚠️ IMPORTANTE:
+==============
+Execute SEPARADO do odometry_bringup.launch.py para evitar 
+conflitos de comunicação serial ESP32.
+
 DEPENDÊNCIAS:
 ============
 - robot_description deve estar ativo (robot_state.launch.py)
-- Arquivo de configuração: config/robot_controllers.yaml
+- ESP32 PWM em /dev/ttyUSB0
+- Arquivo: config/robot_controllers.yaml e motor_params.yaml
 """
 
 from launch import LaunchDescription
@@ -81,14 +92,21 @@ def generate_launch_description():
     )
     
     # ===============================================
-    # 4. Hardware Interface Node (ESP32 PWM)
+    # 4. PWM Controller Node (ESP32 PWM)
     # ===============================================
-    hw_interface_node = Node(
+    pwm_controller_node = Node(
         package='caramelo_bringup',
-        executable='caramelo_hw_interface_node',
-        name='caramelo_hw_interface_node',
+        executable='pwm_controller_node',
+        name='pwm_controller_node',
         output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
+        parameters=[
+            PathJoinSubstitution([
+                caramelo_bringup_path,
+                'config',
+                'motor_params.yaml'
+            ]),
+            {'use_sim_time': use_sim_time}
+        ],
         prefix='bash -c "sleep 3; $0 $@"',  # Aguarda controller_manager
         respawn=True
     )
@@ -118,6 +136,6 @@ def generate_launch_description():
         
         # Ordem de inicialização com delays:
         controller_manager,                      # 1. Controller Manager (2s delay)
-        hw_interface_node,                      # 2. Hardware Interface (3s delay)
-        mecanum_drive_controller_spawner,       # 3. Mecanum Controller (5s delay)
+        pwm_controller_node,                     # 2. PWM Controller (3s delay)
+        mecanum_drive_controller_spawner,        # 3. Mecanum Controller (5s delay)
     ])

@@ -1,3 +1,28 @@
+#!/usr/bin/env python3
+"""
+⚡ PWM CONTROLLER NODE - Controlador PWM para Mecanum Drive
+
+FUNÇÃO PRINCIPAL:
+================
+Controla motores ESP32 via PWM baseado no mecanum_drive_controller
+Recebe comandos de velocidade e converte para valores PWM individuais
+
+ENTRADAS:
+=========
+- /mecanum_controller/commands (Float64MultiArray) - Comandos diretos das rodas
+
+SAÍDAS:
+=======
+- PWM via serial para ESP32 dos motores (/dev/ttyUSB0)
+- /joint_states (sensor_msgs/JointState) - Estados simulados das rodas
+
+PROTOCOLO SERIAL:
+================
+JSON: {"pwm_fl": X, "pwm_fr": Y, "pwm_rl": Z, "pwm_rr": W}
+PWM: 0-1023 (512=parado, 0=frente_max, 1023=trás_max)
+Baudrate: 9600
+"""
+
 import json
 import time
 
@@ -8,9 +33,9 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 
 
-class CarameloHWInterfaceNode(Node):
+class PWMControllerNode(Node):
     def __init__(self):
-        super().__init__('caramelo_hw_interface_node')
+        super().__init__('pwm_controller_node')
         
         # Assina comandos de velocidade das rodas (esperado pelo mecanum_drive_controller)
         self.subscription = self.create_subscription(
@@ -339,7 +364,39 @@ class CarameloHWInterfaceNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = CarameloHWInterfaceNode()
+    node = PWMControllerNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+    def log_high_frequency_data(self):
+        """Logs detalhados para alta frequência de depuração"""
+        self.log_counter += 1
+        
+        # Log a cada 50 ciclos (5 segundos em 10Hz)
+        if self.log_counter % 50 == 0:
+            self.get_logger().info(f'⚡ PWM LOG #{self.log_counter//50}:')
+            self.get_logger().info(f'   Velocidades: FL={self.last_wheel_velocities[0]:.2f}, FR={self.last_wheel_velocities[1]:.2f}, RL={self.last_wheel_velocities[2]:.2f}, RR={self.last_wheel_velocities[3]:.2f} rad/s')
+            self.get_logger().info(f'   PWM Values: FL={self.last_pwm_values[0]}, FR={self.last_pwm_values[1]}, RL={self.last_pwm_values[2]}, RR={self.last_pwm_values[3]}')
+            self.get_logger().info(f'   Cmd_vel: linear_x={self.last_cmd_vel["linear_x"]:.2f}, linear_y={self.last_cmd_vel["linear_y"]:.2f}, angular_z={self.last_cmd_vel["angular_z"]:.2f}')
+            if self.connection_established:
+                self.get_logger().info(f'   Status: ESP32 PWM CONECTADA ({self.serial_port.port})')
+            else:
+                self.get_logger().warn(f'   Status: ESP32 PWM DESCONECTADA')
+
+    def __del__(self):
+        """Fechar conexão serial ao finalizar"""
+        if hasattr(self, 'serial_port') and self.serial_port.is_open:
+            self.serial_port.close()
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = PWMControllerNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

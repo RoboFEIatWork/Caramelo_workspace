@@ -1,0 +1,30 @@
+# =====================================================
+# CONTROLADOR PWM SIMPLIFICADO - ESP32 MOTORES
+# =====================================================
+
+pwm_controller_node:
+  ros__parameters:
+    # Hardware
+    serial_port: "/dev/ttyUSB0"
+    serial_baudrate: 9600         # Baudrate correto da ESP32 PWM
+    update_frequency: 50.0
+    
+    # Parâmetros físicos do robô
+    wheel_radius: 0.05        # metros
+    wheel_base: 0.47          # metros
+    wheel_separation: 0.31    # metros
+    
+    # Limites de velocidade
+    max_linear_velocity: 1.5  # m/s
+    max_angular_velocity: 2.0 # rad/s
+    
+    # Motor
+    max_motor_rpm: 8022.0     # RPM máximo
+    gear_ratio: 28.0          # Redução 1:28
+    
+    # PWM
+    pwm_center: 512           # Parado
+    pwm_range: 511            # Range disponível
+    
+    # Segurança
+    safety_timeout: 1.0       # segundos sem comando

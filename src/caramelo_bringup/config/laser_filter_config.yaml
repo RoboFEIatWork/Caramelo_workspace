@@ -1,15 +1,23 @@
+# =====================================================
+# FILTROS PARA RPLIDAR S2 - CARAMELO
+# =====================================================
+# Remove pontos que atrapalham navegação e SLAM
+
 scan_filter_chain:
   ros__parameters:
     scan_filter_chain:
-      - name: angle
+      # Filtro de ângulo: Remove pontos voltados para o robô
+      - name: angle_filter
         type: laser_filters/LaserScanAngularBoundsFilter
         params:
-          lower_angle: -1.5708  # -90 graus em radianos
-          upper_angle: 1.5708   # +90 graus em radianos
-      - name: range
+          lower_angle: -1.5708  # -90° em radianos
+          upper_angle: 1.5708   # +90° em radianos
+          
+      # Filtro de distância: Remove pontos muito próximos/distantes  
+      - name: range_filter
         type: laser_filters/LaserScanRangeFilter  
         params:
           lower_replacement_value: .nan
           upper_replacement_value: .nan
-          lower_bound: 0.05     # mínimo 5cm
-          upper_bound: 30.0     # máximo 30m para RPLidar S2
+          lower_bound: 0.15     # mínimo 15cm (evita pontos do robô)
+          upper_bound: 12.0     # máximo 12m (limite útil do S2)
