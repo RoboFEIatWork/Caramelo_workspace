@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-CARAMELO NAVEGAÇÃO COMPLETA
+CARAMELO NAVEGAÇÃO COMPLETA COM SISTEMA DE TASKS
 Launch completo para navegação autônoma incluindo:
-- Nav2 stack completo
-- AMCL para localização
-- Map server para mapa estático  
-- TF map → odom (através do AMCL)
-- Twist converter para movimento físico
-- RViz para visualização
-- Waypoint navigation automático
+- Nav2 stack completo com AMCL (localização)
+- Map Server (mapa estático da arena)
+- Sistema de tasks automático
+- Filtro de laser scan (90°-270°)
+- Raio de inflação corrigido (0.01m)
+
+Uso: ros2 launch caramelo_navigation caramelo_navigation.launch.py arena:=teste_robocup25 task:=BMT
 """
 
 import os
@@ -27,137 +27,131 @@ def generate_launch_description():
     
     # Argumentos
     use_sim_time = LaunchConfiguration('use_sim_time')
-    map_yaml_file = LaunchConfiguration('map')
-    nav2_config_file = LaunchConfiguration('params_file')
     arena = LaunchConfiguration('arena')
+    task = LaunchConfiguration('task')
     
     # Caminhos dos arquivos
     pkg_nav = get_package_share_directory('caramelo_navigation')
     
-    # Argumentos de launch
+    # Argumentos de launch (sistema BMT atual)
     declare_arena_cmd = DeclareLaunchArgument(
         'arena',
-        default_value='teste_lab',
-        description='Nome da arena (pasta dentro de maps/). Ex: arena_fei, teste_lab'
+        default_value='teste_robocup25',
+        description='Nome da arena (pasta dentro de maps/). Ex: arena_fei, teste_robocup25'
+    )
+    
+    declare_task_cmd = DeclareLaunchArgument(
+        'task',
+        default_value='BMT',
+        description='Tipo de task (BMT, BTT1, BTT2, ATT1, ATT2)'
     )
     
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='false',
-        description='Use simulation (Gazebo) clock if true'
+        description='Use simulation time if true'
     )
     
-    declare_map_yaml_cmd = DeclareLaunchArgument(
-        'map',
-        default_value=['/home/work/Caramelo_workspace/maps/', arena, '/map.yaml'],
-        description='Full path to map yaml file to load'
-    )
+    # Construir caminhos dinâmicos baseados na arena (mantendo flexibilidade)
+    map_yaml_path = PathJoinSubstitution([
+        '/home/work/Caramelo_workspace/maps',
+        arena,
+        'map.yaml'
+    ])
     
-    declare_params_file_cmd = DeclareLaunchArgument(
-        'params_file',
-        default_value=os.path.join(pkg_nav, 'config', 'caramelo_nav2.yaml'),
-        description='Full path to param file to load'
-    )
+    # Usar configuração nav2 correta (baseado no que funcionava)
+    nav2_params_path = os.path.join(pkg_nav, 'config', 'nav2_params.yaml')
+    rviz_config_path = os.path.join(pkg_nav, 'rviz', 'navigation_complete.rviz')
     
     # ==========================================================================
-    # NODES ESSENCIAIS PARA NAVEGAÇÃO
+    # NAVEGAÇÃO COM AMCL + MAPA ESTÁTICO (baseado no commit funcional fd8ea47)
     # ==========================================================================
     
-    # 1. Twist Converter (ESSENCIAL para movimento físico)
-    twist_converter_node = Node(
-        package='caramelo_bringup',
-        executable='twist_converter_node',
-        name='twist_converter',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-        }]
-    )
-    
-    # 2. Map Server (carrega mapa estático)
-    map_server_node = Node(
+    # 1. Map Server (mapa estático da arena)
+    map_server_cmd = Node(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
         output='screen',
         parameters=[{
             'use_sim_time': use_sim_time,
-            'yaml_filename': map_yaml_file
+            'yaml_filename': map_yaml_path
         }]
     )
     
-    # 3. AMCL (localização + TF map→odom)
-    amcl_node = Node(
+    # 2. AMCL (localização por filtro de partículas + scan matching)
+    amcl_cmd = Node(
         package='nav2_amcl',
         executable='amcl',
         name='amcl',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 4. Nav2 Controller Server
-    controller_server_node = Node(
+    # 3. Laser Scan Filter (filtra scan: 90°-270°, min 5cm)
+    laser_filter_cmd = Node(
+        package='caramelo_navigation',
+        executable='laser_scan_filter',
+        name='laser_scan_filter',
+        output='screen'
+    )
+    
+    # 3. Controller Server
+    controller_cmd = Node(
         package='nav2_controller',
         executable='controller_server',
+        name='controller_server',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 5. Nav2 Planner Server
-    planner_server_node = Node(
+    # 4. Planner Server
+    planner_cmd = Node(
         package='nav2_planner',
         executable='planner_server',
         name='planner_server',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 6. Nav2 Behavior Server
-    behavior_server_node = Node(
+    # 5. Behavior Server
+    behaviors_cmd = Node(
         package='nav2_behaviors',
         executable='behavior_server',
+        name='behavior_server',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 7. Nav2 BT Navigator
-    bt_navigator_node = Node(
+    # 6. BT Navigator
+    bt_navigator_cmd = Node(
         package='nav2_bt_navigator',
         executable='bt_navigator',
         name='bt_navigator',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 8. Nav2 Waypoint Follower
-    waypoint_follower_node = Node(
+    # 7. Waypoint Follower
+    waypoint_follower_cmd = Node(
         package='nav2_waypoint_follower',
         executable='waypoint_follower',
         name='waypoint_follower',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 9. Nav2 Smoother Server
-    smoother_server_node = Node(
-        package='nav2_smoother',
-        executable='smoother_server',
-        name='smoother_server',
-        output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
-    )
-    
-    # 10. Nav2 Velocity Smoother
-    velocity_smoother_node = Node(
+    # 8. Velocity Smoother
+    velocity_smoother_cmd = Node(
         package='nav2_velocity_smoother',
         executable='velocity_smoother',
         name='velocity_smoother',
         output='screen',
-        parameters=[nav2_config_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_path]
     )
     
-    # 11. Nav2 Lifecycle Manager
-    lifecycle_manager_node = Node(
+    # 9. Lifecycle Manager
+    lifecycle_manager_cmd = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
         name='lifecycle_manager_navigation',
@@ -166,171 +160,104 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'autostart': True,
             'node_names': [
-                'map_server',
-                'amcl',
+                'map_server',    # Mapa estático da arena  
+                'amcl',          # Localização por filtro de partículas
                 'controller_server',
                 'planner_server',
                 'behavior_server',
                 'bt_navigator',
                 'waypoint_follower',
-                'smoother_server',
                 'velocity_smoother'
             ]
         }]
     )
     
     # ==========================================================================
-    # INICIALIZAÇÃO E VISUALIZAÇÃO (COM DELAY)
+    # INTEGRAÇÃO E SISTEMA DE TASKS
     # ==========================================================================
     
-    # 12. AMCL Initializer (publica pose inicial automaticamente)
-    amcl_initializer_node = TimerAction(
-        period=8.0,  # Aguarda Nav2 inicializar
+    # 10. Twist Converter (Twist -> TwistStamped)
+    twist_converter_cmd = Node(
+        package='caramelo_bringup',
+        executable='twist_converter_node',
+        name='twist_converter_node',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time
+        }]
+    )
+    
+    # 11. Task Navigation Manager (Sistema BMT - Planejamento de Rota)
+    task_navigation_manager = TimerAction(
+        period=10.0,  # Aguardar Nav2 + AMCL inicializar
         actions=[
             Node(
                 package='caramelo_navigation',
-                executable='amcl_initializer',
-                name='amcl_initializer',
+                executable='task_navigation_manager.py',
+                name='task_navigation_manager',
                 output='screen',
                 parameters=[{
                     'use_sim_time': use_sim_time,
-                    'initial_pose_x': 0.0,
-                    'initial_pose_y': 0.0,
-                    'initial_pose_yaw': 0.0
+                    'arena': arena,
+                    'task_type': task,
                 }]
             )
         ]
     )
     
-    # 11. RViz (visualização)
-    nav2_bringup_dir = get_package_share_directory('nav2_bringup')
-    rviz_config_file = os.path.join(nav2_bringup_dir, 'rviz', 'nav2_default_view.rviz')
-    rviz_node = TimerAction(
-        period=10.0,
+    # ==========================================================================
+    # VISUALIZAÇÃO
+    # ==========================================================================
+    
+    # 12. RViz (visualização)
+    rviz_cmd = TimerAction(
+        period=5.0,
         actions=[
             Node(
                 package='rviz2',
                 executable='rviz2',
                 name='rviz2',
                 output='screen',
-                arguments=['-d', rviz_config_file]
+                arguments=['-d', rviz_config_path]
             )
         ]
     )
     
-    # 12. Waypoint Navigation (navegação automática)
-    waypoint_nav_node = TimerAction(
-        period=15.0,  # Aguarda tudo inicializar
-        actions=[
-            Node(
-                package='caramelo_navigation',
-                executable='caramelo_waypoint_nav',
-                name='caramelo_waypoint_navigator',
-                output='screen',
-                parameters=[{
-                    'use_sim_time': use_sim_time,
-                    'arena': arena,
-                    'mission_file': ['/home/work/Caramelo_workspace/maps/', arena, '/mission.yaml'],
-                    'waypoints_file': ['/home/work/Caramelo_workspace/maps/', arena, '/workstations.json'],
-                    'auto_start': True,
-                    'publish_initial_pose': True,
-                }],
-                remappings=[
-                    ('/cmd_vel', '/cmd_vel_raw'),  # Para safety filter
-                ]
-            )
-        ]
-    )
-    
-    # 13. Safety Filter (filtro de segurança para velocidades)
-    safety_filter_node = Node(
-        package='caramelo_navigation', 
-        executable='cmd_vel_safety_filter',
-        name='cmd_vel_safety_filter',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-            'max_linear_vel': 0.5,      # Velocidade máxima para competição
-            'max_angular_vel': 1.0,
-            'emergency_stop_distance': 0.10,  # 10cm - próximo para WS
-            'warning_distance': 0.25,          # 25cm - aviso antecipado
-        }],
-        remappings=[
-            ('/cmd_vel_raw', '/cmd_vel_raw'),  # Input do waypoint navigator
-            ('/cmd_vel', '/cmd_vel'),          # Output para motores
-        ]
-    )
-    
-    # 14. CMD VEL Monitor (monitor de comandos)
-    cmd_vel_monitor_node = Node(
-        package='caramelo_navigation',
-        executable='cmd_vel_monitor',
-        name='cmd_vel_monitor',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-        }]
-    )
-
     # ==========================================================================
     # LOGS INFORMATIVOS
     # ==========================================================================
     
     startup_log = LogInfo(
-        msg="🚀 CARAMELO NAVEGAÇÃO: Iniciando sistema completo..."
-    )
-    
-    nav2_ready_log = TimerAction(
-        period=5.0,
-        actions=[
-            LogInfo(msg="📍 Nav2 stack inicializando...")
-        ]
-    )
-    
-    amcl_ready_log = TimerAction(
-        period=8.0,
-        actions=[
-            LogInfo(msg="🗺️  AMCL e mapa carregados, publicando pose inicial...")
-        ]
-    )
-    
-    waypoint_ready_log = TimerAction(
-        period=15.0,
-        actions=[
-            LogInfo(msg="🎯 Iniciando navegação automática por waypoints!")
-        ]
+        msg="🚀 CARAMELO NAVEGAÇÃO: Sistema de tasks iniciando..."
     )
     
     return LaunchDescription([
         # Argumentos
         declare_arena_cmd,
+        declare_task_cmd,
         declare_use_sim_time_cmd,
-        declare_map_yaml_cmd,
-        declare_params_file_cmd,
         
         # Logs
         startup_log,
-        nav2_ready_log,
-        amcl_ready_log,
-        waypoint_ready_log,
         
-        # Nodes essenciais (imediatos)
-        twist_converter_node,
-        map_server_node,
-        amcl_node,
-        controller_server_node,
-        planner_server_node,
-        behavior_server_node,
-        bt_navigator_node,
-        waypoint_follower_node,
-        smoother_server_node,
-        velocity_smoother_node,
-        lifecycle_manager_node,
-        safety_filter_node,
-        cmd_vel_monitor_node,
+        # Nav2 Stack Completo (AMCL + Map Server)
+        map_server_cmd,
+        amcl_cmd,
+        laser_filter_cmd,
+        controller_cmd,
+        planner_cmd,
+        behaviors_cmd,
+        bt_navigator_cmd,
+        waypoint_follower_cmd,
+        velocity_smoother_cmd,
+        lifecycle_manager_cmd,
         
-        # Nodes com delay
-        amcl_initializer_node,
-        rviz_node,
-        waypoint_nav_node,
+        # Integração
+        twist_converter_cmd,
+        
+        # Sistema BMT (Planejamento + Execução)
+        task_navigation_manager,
+        
+        # Visualização
+        rviz_cmd,
     ])

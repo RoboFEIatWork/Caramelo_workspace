@@ -85,26 +85,26 @@ def generate_launch_description():
         'map.yaml'
     ])
     
-    # Map server único que escolhe o caminho baseado na condição
+    # Map server único que escolhe o caminho baseado na arena
     map_server = Node(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
         parameters=[{
-            'yaml_filename': map_file,  # Usa map_file diretamente
+            'yaml_filename': map_file_path,  # Usa o caminho construído baseado na arena
             'use_sim_time': False
         }],
         output='screen'
     )
     
-    # 2. Lifecycle manager para o map server
+    # 2. Lifecycle manager para o map server e costmap
     lifecycle_manager = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
         name='lifecycle_manager_map',
         parameters=[{
             'autostart': True,
-            'node_names': ['map_server']
+            'node_names': ['map_server', 'static_costmap']
         }],
         output='screen'
     )
@@ -141,20 +141,31 @@ def generate_launch_description():
         output='screen'
     )
     
-    # 6. Interactive Robot Positioner 
+    # 6. Costmap Estática com Inflação de 4cm
+    costmap_params_file = os.path.join(caramelo_nav_dir, 'config', 'static_costmap_params.yaml')
+    
+    static_costmap = Node(
+        package='nav2_costmap_2d',
+        executable='nav2_costmap_2d',
+        name='static_costmap',
+        parameters=[costmap_params_file],
+        output='screen'
+    )
+    
+    # 7. Interactive Robot Positioner 
     interactive_positioner = Node(
         package='caramelo_navigation',
         executable='interactive_robot_positioner',
         name='interactive_robot_positioner',
         parameters=[{
-            'map_file': map_file,  # Usa map_file diretamente
+            'map_file': map_file_path,  # Usa o caminho construído baseado na arena
             'map_folder': map_folder_path
         }],
         output='screen'
     )
     
-    # 7. RViz com configuração final - aguarda 5 segundos
-    rviz_config = os.path.join(caramelo_nav_dir, 'config', 'checkpoint_creator_final.rviz')
+    # 8. RViz com configuração final - aguarda 5 segundos (COM COSTMAP!)
+    rviz_config = os.path.join(caramelo_nav_dir, 'config', 'waypoint_creator_with_costmap.rviz')
     
     rviz_delayed = TimerAction(
         period=5.0,  # Aguarda 5 segundos
@@ -178,6 +189,7 @@ def generate_launch_description():
         robot_state_publisher,
         joint_state_publisher,
         tf_map_odom,
+        static_costmap,
         interactive_positioner,
         rviz_delayed
     ])

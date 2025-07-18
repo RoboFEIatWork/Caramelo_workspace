@@ -1,0 +1,11 @@
+tasks:
+- action: navigate_and_wait
+  task_id: nav_to_wp1
+  type: navigation
+  wait_time: 5.0
+  waypoint: WP1
+- action: navigate_and_wait
+  task_id: nav_to_wp2
+  type: navigation
+  wait_time: 5.0
+  waypoint: WP2

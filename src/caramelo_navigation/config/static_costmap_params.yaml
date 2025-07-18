@@ -1,0 +1,54 @@
+static_costmap:
+  static_costmap:
+    ros__parameters:
+      # Configurações globais da costmap
+      global_frame: map
+      robot_base_frame: base_footprint
+      use_sim_time: false
+      
+      # Resolução da costmap (mesma do mapa)
+      resolution: 0.02  # 2cm por pixel
+      
+      # Tamanho da costmap (será ajustado automaticamente baseado no mapa)
+      width: 100  # metros (será sobrescrito)
+      height: 100  # metros (será sobrescrito)
+      origin_x: 0.0
+      origin_y: 0.0
+      
+      # Taxa de atualização
+      update_frequency: 10.0  # Hz
+      publish_frequency: 10.0  # Hz
+      
+      # Plugins da costmap
+      plugins: ["static_layer", "inflation_layer"]
+      
+      # Plugin: Static Layer (carrega o mapa)
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+        enabled: true
+        subscribe_to_updates: true
+        
+      # Plugin: Inflation Layer (inflação de obstáculos)
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        
+        # 🎯 INFLAÇÃO DE 4CM = 2 CÉLULAS (resolução 2cm)
+        inflation_radius: 0.04  # 4cm de inflação
+        cost_scaling_factor: 10.0  # Fator de custo (0-255)
+        
+        # Configurações avançadas
+        inflate_unknown: false  # Não inflar áreas desconhecidas
+        inflate_around_unknown: true  # Inflar ao redor de áreas desconhecidas
+
+      # 🤖 FOOTPRINT CIRCULAR DO ROBÔ - RAIO 37CM
+      # Aproximação poligonal de um círculo de 37cm de raio (8 pontos)
+      footprint: "[[0.37, 0.0], [0.262, 0.262], [0.0, 0.37], [-0.262, 0.262], [-0.37, 0.0], [-0.262, -0.262], [0.0, -0.37], [0.262, -0.262]]"
+      
+      # Valores de custo
+      lethal_cost_threshold: 100
+      unknown_cost_value: 255
+      trinary_costmap: true
+      track_unknown_space: true
+      use_maximum: false
