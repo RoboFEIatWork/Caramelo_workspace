@@ -1,0 +1,30 @@
+{
+  "WS07": {
+    "type": "10",
+    "objects": [
+      {
+        "name": 26,
+        "decoy": false
+      },
+      {
+        "name": 7,
+        "decoy": false
+      },
+      {
+        "name": 25,
+        "decoy": true
+      }
+    ],
+    "manipulado": false
+  },
+  "WS14": {
+    "type": "10",
+    "objects": [
+      {
+        "name": 25,
+        "decoy": false
+      }
+    ],
+    "manipulado": false
+  }
+}

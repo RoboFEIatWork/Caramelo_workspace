@@ -1,0 +1,64 @@
+[0.865s] Invoking command in '/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv310) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages:${PYTHONPATH} VIRTUAL_ENV_PROMPT=(venv310) /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/caramelo_manipulation build --build-base /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build install --record /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/install.log --single-version-externally-managed install_data
+[1.152s] running egg_info
+[1.174s] writing build/caramelo_manipulation/caramelo_manipulation.egg-info/PKG-INFO
+[1.175s] writing dependency_links to build/caramelo_manipulation/caramelo_manipulation.egg-info/dependency_links.txt
+[1.175s] writing entry points to build/caramelo_manipulation/caramelo_manipulation.egg-info/entry_points.txt
+[1.175s] writing requirements to build/caramelo_manipulation/caramelo_manipulation.egg-info/requires.txt
+[1.175s] writing top-level names to build/caramelo_manipulation/caramelo_manipulation.egg-info/top_level.txt
+[1.223s] reading manifest file 'build/caramelo_manipulation/caramelo_manipulation.egg-info/SOURCES.txt'
+[1.224s] writing manifest file 'build/caramelo_manipulation/caramelo_manipulation.egg-info/SOURCES.txt'
+[1.224s] running build
+[1.224s] running build_py
+[1.225s] /usr/lib/python3/dist-packages/setuptools/command/build_py.py:204: _Warning: Package 'caramelo_manipulation.data' is absent from the `packages` configuration.
+[1.225s] !!
+[1.225s] 
+[1.225s]         ********************************************************************************
+[1.225s]         ############################
+[1.225s]         # Package would be ignored #
+[1.225s]         ############################
+[1.225s]         Python recognizes 'caramelo_manipulation.data' as an importable package[^1],
+[1.225s]         but it is absent from setuptools' `packages` configuration.
+[1.225s] 
+[1.225s]         This leads to an ambiguous overall configuration. If you want to distribute this
+[1.225s]         package, please make sure that 'caramelo_manipulation.data' is explicitly added
+[1.225s]         to the `packages` configuration field.
+[1.226s] 
+[1.226s]         Alternatively, you can also rely on setuptools' discovery methods
+[1.226s]         (for example by using `find_namespace_packages(...)`/`find_namespace:`
+[1.226s]         instead of `find_packages(...)`/`find:`).
+[1.226s] 
+[1.226s]         You can read more about "package discovery" on setuptools documentation page:
+[1.226s] 
+[1.226s]         - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+[1.226s] 
+[1.226s]         If you don't want 'caramelo_manipulation.data' to be distributed and are
+[1.226s]         already explicitly excluding 'caramelo_manipulation.data' via
+[1.226s]         `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+[1.226s]         you can try to use `exclude_package_data`, or `include-package-data=False` in
+[1.226s]         combination with a more fine grained `package-data` configuration.
+[1.226s] 
+[1.226s]         You can read more about "package data files" on setuptools documentation page:
+[1.227s] 
+[1.227s]         - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+[1.227s] 
+[1.227s] 
+[1.227s]         [^1]: For Python, any directory (with suitable naming) can be imported,
+[1.227s]               even if it does not contain any `.py` files.
+[1.227s]               On the other hand, currently there is no concept of package data
+[1.227s]               directory, all directories are treated like packages.
+[1.227s]         ********************************************************************************
+[1.227s] 
+[1.227s] !!
+[1.227s]   check.warn(importable)
+[1.227s] running install
+[1.231s] running install_lib
+[1.255s] running install_data
+[1.255s] running install_egg_info
+[1.278s] removing '/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation-0.1.0-py3.12.egg-info' (and everything under it)
+[1.278s] Copying build/caramelo_manipulation/caramelo_manipulation.egg-info to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation-0.1.0-py3.12.egg-info
+[1.279s] running install_scripts
+[1.425s] Installing manip_listener script to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/caramelo_manipulation
+[1.425s] Installing manip_listener_launcher script to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/caramelo_manipulation
+[1.425s] Installing manip_service script to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/caramelo_manipulation
+[1.426s] writing list of installed files to '/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/install.log'
+[1.454s] Invoked command in '/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv310) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages:${PYTHONPATH} VIRTUAL_ENV_PROMPT=(venv310) /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/caramelo_manipulation build --build-base /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build install --record /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/install.log --single-version-externally-managed install_data

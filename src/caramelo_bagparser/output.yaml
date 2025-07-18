@@ -1,0 +1,26 @@
+start:
+- name: WS07
+  type: '10'
+  objects:
+  - name: F2020B
+    decoy: false
+  - name: F2020B
+    decoy: false
+  - name: F2020B
+    decoy: false
+- name: WS14
+  type: '10'
+  objects: []
+target:
+- name: WS07
+  type: '10'
+  objects: []
+- name: WS14
+  type: '10'
+  objects:
+  - name: F2020B
+    decoy: false
+  - name: F2020B
+    decoy: false
+  - name: F2020B
+    decoy: false

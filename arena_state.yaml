@@ -1,0 +1,90 @@
+start:
+  - id: 41
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 40
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 14
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 40
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 41
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 17
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 12
+    ws: "WS08"
+    type: "10"
+    decoy: false
+  - id: 16
+    ws: "WS08"
+    type: "10"
+    decoy: false
+  - id: 11
+    ws: "SH02"
+    type: "SH"
+    decoy: false
+  - id: 13
+    ws: "WS12"
+    type: "00"
+    decoy: false
+  - id: 15
+    ws: "RT01"
+    type: "TT"
+    decoy: false
+target:
+  - id: 41
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 40
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 16
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 17
+    ws: "WS14"
+    type: "05"
+    decoy: false
+  - id: 40
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 41
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 15
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 13
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 12
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 11
+    ws: "WS11"
+    type: "15"
+    decoy: false
+  - id: 14
+    ws: "WS12"
+    type: "00"
+    decoy: false
