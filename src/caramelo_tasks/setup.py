@@ -26,7 +26,6 @@ setup(
     entry_points={
         'console_scripts': [
             'task_executor = caramelo_tasks.task_executor_node:main',
-            'task_navigator = caramelo_tasks.task_navigator:main',
         ],
     },
 )

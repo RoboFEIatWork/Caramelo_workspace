@@ -1,0 +1,106 @@
+running egg_info
+writing build/caramelo_manipulation/caramelo_manipulation.egg-info/PKG-INFO
+writing dependency_links to build/caramelo_manipulation/caramelo_manipulation.egg-info/dependency_links.txt
+writing entry points to build/caramelo_manipulation/caramelo_manipulation.egg-info/entry_points.txt
+writing requirements to build/caramelo_manipulation/caramelo_manipulation.egg-info/requires.txt
+writing top-level names to build/caramelo_manipulation/caramelo_manipulation.egg-info/top_level.txt
+reading manifest file 'build/caramelo_manipulation/caramelo_manipulation.egg-info/SOURCES.txt'
+writing manifest file 'build/caramelo_manipulation/caramelo_manipulation.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/manip_listener_launcher.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/place.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/dynamixel_motor.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/pegada.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/caramelo_manip.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/translate.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/__init__.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/manipulador.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/excute_manip.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+copying caramelo_manipulation/manip_service.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation
+/usr/lib/python3/dist-packages/setuptools/command/build_py.py:204: _Warning: Package 'caramelo_manipulation.data' is absent from the `packages` configuration.
+!!
+
+        ********************************************************************************
+        ############################
+        # Package would be ignored #
+        ############################
+        Python recognizes 'caramelo_manipulation.data' as an importable package[^1],
+        but it is absent from setuptools' `packages` configuration.
+
+        This leads to an ambiguous overall configuration. If you want to distribute this
+        package, please make sure that 'caramelo_manipulation.data' is explicitly added
+        to the `packages` configuration field.
+
+        Alternatively, you can also rely on setuptools' discovery methods
+        (for example by using `find_namespace_packages(...)`/`find_namespace:`
+        instead of `find_packages(...)`/`find:`).
+
+        You can read more about "package discovery" on setuptools documentation page:
+
+        - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+
+        If you don't want 'caramelo_manipulation.data' to be distributed and are
+        already explicitly excluding 'caramelo_manipulation.data' via
+        `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+        you can try to use `exclude_package_data`, or `include-package-data=False` in
+        combination with a more fine grained `package-data` configuration.
+
+        You can read more about "package data files" on setuptools documentation page:
+
+        - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+
+
+        [^1]: For Python, any directory (with suitable naming) can be imported,
+              even if it does not contain any `.py` files.
+              On the other hand, currently there is no concept of package data
+              directory, all directories are treated like packages.
+        ********************************************************************************
+
+!!
+  check.warn(importable)
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data
+copying caramelo_manipulation/data/containers.json -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data
+copying caramelo_manipulation/data/retira.json -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data
+copying caramelo_manipulation/data/tags.json -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data
+running install
+running install_lib
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/manip_listener_launcher.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/place.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/dynamixel_motor.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/pegada.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/caramelo_manip.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/translate.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/__init__.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/data
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data/tags.json -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/data
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data/retira.json -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/data
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/data/containers.json -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/data
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/manipulador.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/excute_manip.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+copying /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/build/lib/caramelo_manipulation/manip_service.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/manip_listener_launcher.py to manip_listener_launcher.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/place.py to place.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/dynamixel_motor.py to dynamixel_motor.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/pegada.py to pegada.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/caramelo_manip.py to caramelo_manip.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/translate.py to translate.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/manipulador.py to manipulador.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/excute_manip.py to excute_manip.cpython-312.pyc
+byte-compiling /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation/manip_service.py to manip_service.cpython-312.pyc
+running install_data
+copying package.xml -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/share/caramelo_manipulation
+creating /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/share/caramelo_manipulation/launch
+copying launch/caramelo_manipulation.launch.py -> /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/share/caramelo_manipulation/launch
+running install_egg_info
+Copying build/caramelo_manipulation/caramelo_manipulation.egg-info to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/python3.12/site-packages/caramelo_manipulation-0.1.0-py3.12.egg-info
+running install_scripts
+Installing manip_listener script to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/caramelo_manipulation
+Installing manip_listener_launcher script to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/caramelo_manipulation
+Installing manip_service script to /home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/install/caramelo_manipulation/lib/caramelo_manipulation
+writing list of installed files to '/home/linux24-04/Caramelo_workspace/src/caramelo_manipulation/build/caramelo_manipulation/install.log'

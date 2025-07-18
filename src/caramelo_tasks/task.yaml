@@ -1,0 +1,43 @@
+start:
+- ws: WS14
+  type: '05'
+  objects:
+    id: 3
+    decoy: false
+- ws: WS11
+  type: '15'
+  objects:
+    id: 2
+    decoy: false
+- ws: WS01
+  type: '10'
+  objects:
+  - id: 6
+    decoy: false
+  - id: 4
+    decoy: false
+- ws: WS12
+  type: '00'
+  objects:
+    id: 4
+    decoy: false
+target:
+- ws: WS14
+  type: '05'
+  objects:
+  - id: 2
+    decoy: false
+  - id: 4
+    decoy: false
+- ws: WS11
+  type: '15'
+  objects:
+  - id: 4
+    decoy: false
+  - id: 6
+    decoy: false
+- ws: WS12
+  type: '00'
+  objects:
+    id: 3
+    decoy: false

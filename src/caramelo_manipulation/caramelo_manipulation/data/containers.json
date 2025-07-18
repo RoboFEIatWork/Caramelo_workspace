@@ -1,0 +1,14 @@
+{
+    "A": {
+        "ocupado": true,
+        "id": 26
+    },
+    "B": {
+        "ocupado": false,
+        "id": null
+    },
+    "C": {
+        "ocupado": false,
+        "id": null
+    }
+}

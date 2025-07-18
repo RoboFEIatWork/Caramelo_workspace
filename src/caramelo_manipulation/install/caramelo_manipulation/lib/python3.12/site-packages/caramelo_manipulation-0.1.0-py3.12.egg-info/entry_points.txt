@@ -1,0 +1,4 @@
+[console_scripts]
+manip_listener = caramelo_manipulation.manip_listener_launcher:main
+manip_listener_launcher = caramelo_manipulation.manip_listener_launcher:main
+manip_service = caramelo_manipulation.manip_service:main
