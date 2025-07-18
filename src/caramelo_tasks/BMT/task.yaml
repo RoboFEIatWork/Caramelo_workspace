@@ -1,11 +1,26 @@
-tasks:
-- action: navigate_and_wait
-  task_id: nav_to_wp1
-  type: navigation
-  wait_time: 5.0
-  waypoint: WP1
-- action: navigate_and_wait
-  task_id: nav_to_wp2
-  type: navigation
-  wait_time: 5.0
-  waypoint: WP2
+start:
+- ws: WS02
+  type: '10'
+  objects:
+  - id: 16
+    decoy: false
+  - id: 15
+    decoy: false
+  - id: 12
+    decoy: false
+- ws: WS14
+  type: '10'
+  objects: []
+target:
+- ws: WS02
+  type: '10'
+  objects: []
+- ws: WS14
+  type: '10'
+  objects:
+  - id: 16
+    decoy: false
+  - id: 15
+    decoy: false
+  - id: 12
+    decoy: false
