@@ -139,7 +139,7 @@ def main():
     print("📦 Iniciando sequência place.py...")
 
     # Abrir porta serial e criar objetos motor
-    port_handler = PortHandler('/dev/ttyUSB0')
+    port_handler = PortHandler('/dev/ttyUSB3')
     if not port_handler.openPort():
         print("❌ Não foi possível abrir a porta COM3")
         return

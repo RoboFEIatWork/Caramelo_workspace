@@ -10,7 +10,8 @@
 # USB0 -> ESP PWM (porta física 1-3)
 # USB1 -> ESP Encoder (porta física 1-1)
 # USB2 -> LiDAR
-# USB3 -> Câmera ZED
+# USB3 -> Dispositivo FTDI (A50285BI) - FORÇADO
+# USB4 -> Câmera ZED
 # USB5 -> Intel RealSense
 
 # ====== ESP PWM (USB0) ======
@@ -25,7 +26,11 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", KERNELS=="1
 # Silicon Labs CP210x - Serial: e4c7c3b7f189ec119c08c271d76262f7
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="e4c7c3b7f189ec119c08c271d76262f7", SYMLINK+="caramelo_lidar", MODE="0666", GROUP="dialout"
 
-# ====== Câmera ZED (USB3) ======
+# ====== DISPOSITIVO FTDI (USB3) ======
+# FTDI FT232R USB UART - Serial: A50285BI - DevPath: 1-3 (forçar ttyUSB3)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A50285BI", SYMLINK+="caramelo_ftdi", KERNEL=="ttyUSB*", SYMLINK+="ttyUSB3", MODE="0666", GROUP="dialout"
+
+# ====== Câmera ZED (USB4) ======
 # STEREOLABS ZED 2i - Serial: OV0001
 SUBSYSTEM=="video4linux", ATTRS{idVendor}=="2b03", ATTRS{idProduct}=="f880", ATTRS{serial}=="OV0001", SYMLINK+="video_zed%n", MODE="0666", GROUP="video"
 # ZED HID Interface - Serial: 35894370  

@@ -12,8 +12,12 @@ from pupil_apriltags import Detector
 from dynamixel_sdk import PortHandler
 from dynamixel_motor import DynamixelMotor
 
+
+print("🔍 Python usado:", sys.executable)
+
+
 # === CONFIGURAÇÃO SERIAL ===
-DEVICENAME = '/dev/ttyUSB0'
+DEVICENAME = '/dev/ttyUSB3'
 BAUDRATE = 1000000
 
 # === OFFSETS (zero DH → motor) ===

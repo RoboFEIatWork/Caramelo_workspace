@@ -1,0 +1,16 @@
+# Serviço para navegação para workstations específicas
+# Permite que clientes solicitem navegação para uma WS por nome
+
+# Request
+string workstation_name        # Nome da workstation (ex: "WS01", "WS02", "START", "FINISH")
+string arena_name             # Nome da arena (opcional, usa padrão se vazio)
+float32 timeout              # Timeout em segundos (opcional, usa padrão se 0.0)
+bool wait_for_completion     # Se deve aguardar a conclusão da navegação
+
+---
+
+# Response
+bool success                 # Se a navegação foi iniciada/concluída com sucesso
+string message              # Mensagem de status ou erro
+float32 distance_traveled   # Distância percorrida (se wait_for_completion=true)
+float32 time_elapsed        # Tempo decorrido em segundos

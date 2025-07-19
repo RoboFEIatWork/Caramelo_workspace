@@ -16,7 +16,7 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*')),
         (os.path.join('share', package_name, 'config'), glob('config/*')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*')),
-        (os.path.join('share', package_name, 'maps'), glob('maps/*')),
+        (os.path.join('share', package_name, 'srv'), glob('srv/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,6 +27,17 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            # === NOVO SISTEMA DE NAVEGAÇÃO POR WORKSTATION ===
+            'workstation_navigation_server = caramelo_navigation.workstation_navigation_server:main',
+            'workstation_navigation_server_simple = caramelo_navigation.workstation_navigation_server_simple:main',
+            'workstation_navigation_server_direct = caramelo_navigation.workstation_navigation_server_direct:main',
+            'navigation_test_client = caramelo_navigation.navigation_test_client:main',
+            'navigation_test_client_simple = caramelo_navigation.navigation_test_client_simple:main',
+            'task_integration_example = caramelo_navigation.task_integration_example:main',
+            
+            # === TASK EXECUTOR AUTOMÁTICO ===
+            'task_executor = caramelo_navigation.task_executor:main',
+            
             # === SISTEMA BMT INTEGRADO (PRINCIPAL) ===
             'caramelo_bmt_waypoint_nav = caramelo_navigation.caramelo_bmt_waypoint_nav:main',
             

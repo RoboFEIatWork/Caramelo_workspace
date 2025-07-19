@@ -52,7 +52,7 @@ class PlayMotionNode(Node):
         super().__init__('play_motion_node')
 
         # 🔧 Lê a porta serial a partir do parâmetro ROS 2
-        self.declare_parameter("port", "/dev/ttyUSB0")
+        self.declare_parameter("port", "/dev/ttyUSB3")
         port_name = self.get_parameter("port").get_parameter_value().string_value
 
         self.port_handler = PortHandler(port_name)

@@ -1,0 +1,108 @@
+#!/bin/bash
+"""
+DEMONSTRAÇÃO DO SISTEMA REORGANIZADO
+===================================
+
+Este script demonstra como usar o novo sistema de navegação por workstations.
+
+Autor: GitHub Copilot
+Data: 2025-01-18
+"""
+
+echo "🚀 DEMONSTRAÇÃO: CARAMELO NAVIGATION REORGANIZADO"
+echo "================================================"
+echo ""
+
+echo "📋 SISTEMA ATUAL:"
+echo "   ✓ Workstation Navigation Server"
+echo "   ✓ Navigation Test Client" 
+echo "   ✓ Task Integration Example"
+echo "   ✓ Launch files reorganizados"
+echo ""
+
+echo "🔧 PRÉ-REQUISITOS:"
+echo "   1. Compilar o pacote:"
+echo "      colcon build --packages-select caramelo_navigation"
+echo ""
+echo "   2. Source do workspace:"
+echo "      source install/setup.bash"
+echo ""
+
+echo "🚀 OPÇÕES DE USO:"
+echo ""
+
+echo "📌 OPÇÃO 1: Sistema básico (hardware separado)"
+echo "   Terminal 1 - Hardware:"
+echo "     ros2 launch caramelo_bringup odometry_bringup.launch.py"
+echo "     ros2 launch caramelo_bringup lidar_bringup.launch.py"
+echo "     ros2 launch caramelo_bringup actuators_bringup.launch.py"
+echo ""
+echo "   Terminal 2 - Navegação:"
+echo "     ros2 launch caramelo_navigation basic_navigation.launch.py arena:=arena_fei"
+echo ""
+echo "   Terminal 3 - Teste:"
+echo "     ros2 run caramelo_navigation navigation_test_client WS01 --wait"
+echo ""
+
+echo "📌 OPÇÃO 2: Sistema completo (tudo junto)"
+echo "   Terminal 1:"
+echo "     ros2 launch caramelo_navigation complete_navigation.launch.py arena:=arena_fei"
+echo ""
+echo "   Terminal 2 - Teste:"
+echo "     ros2 run caramelo_navigation navigation_test_client WS02 --wait"
+echo ""
+
+echo "📌 OPÇÃO 3: Exemplo de integração com tasks"
+echo "   Terminal 1 - Navegação:"
+echo "     ros2 launch caramelo_navigation basic_navigation.launch.py arena:=arena_fei"
+echo ""
+echo "   Terminal 2 - Task exemplo:"
+echo "     ros2 run caramelo_navigation task_integration_example --ros-args -p arena:=arena_fei -p task:=BMT"
+echo ""
+
+echo "🧪 TESTES DISPONÍVEIS:"
+echo ""
+echo "   # Navegar para workstations específicas"
+echo "   ros2 run caramelo_navigation navigation_test_client WS01"
+echo "   ros2 run caramelo_navigation navigation_test_client WS02 --wait"
+echo "   ros2 run caramelo_navigation navigation_test_client START --arena arena_robocup25"
+echo "   ros2 run caramelo_navigation navigation_test_client FINISH --wait --timeout 180"
+echo ""
+
+echo "📡 SERVIÇOS ROS:"
+echo ""
+echo "   # Listar serviços"
+echo "   ros2 service list | grep navigate"
+echo ""
+echo "   # Chamar diretamente"
+echo "   ros2 service call /navigate_to_workstation caramelo_navigation/srv/NavigateToWorkstation \\"
+echo "     \"{workstation_name: 'WS01', arena_name: '', wait_for_completion: true, timeout: 120.0}\""
+echo ""
+
+echo "🗂️ ARQUIVOS IMPORTANTES:"
+echo ""
+echo "   Maps (NÃO ALTERAR!):"
+echo "   /home/work/Caramelo_workspace/maps/"
+echo "   ├── arena_fei/"
+echo "   │   ├── map.yaml"
+echo "   │   ├── map.pgm"
+echo "   │   └── waypoints.json"
+echo "   └── ..."
+echo ""
+echo "   Tasks (NÃO ALTERAR!):"
+echo "   src/caramelo_tasks/"
+echo "   ├── BMT/task.yaml"
+echo "   ├── BTT1/task.yaml"
+echo "   └── ..."
+echo ""
+
+echo "📝 PRÓXIMOS PASSOS:"
+echo ""
+echo "   1. Compilar: colcon build --packages-select caramelo_navigation"
+echo "   2. Source: source install/setup.bash"
+echo "   3. Testar: ros2 launch caramelo_navigation basic_navigation.launch.py"
+echo "   4. Navegar: ros2 run caramelo_navigation navigation_test_client WS01 --wait"
+echo ""
+
+echo "✅ Sistema reorganizado e pronto para uso!"
+echo "📖 Consulte README_REORGANIZED.md para detalhes completos"
