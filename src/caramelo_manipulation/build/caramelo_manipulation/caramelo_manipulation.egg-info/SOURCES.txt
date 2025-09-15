@@ -15,13 +15,16 @@ caramelo_manipulation/excute_manip.py
 caramelo_manipulation/manip_listener_launcher.py
 caramelo_manipulation/manip_service.py
 caramelo_manipulation/manipulador.py
+caramelo_manipulation/manipulation_interface.py
 caramelo_manipulation/pegada.py
 caramelo_manipulation/place.py
+caramelo_manipulation/play_motion_node.py
 caramelo_manipulation/translate.py
 caramelo_manipulation/data/containers.json
 caramelo_manipulation/data/retira.json
 caramelo_manipulation/data/tags.json
 launch/caramelo_manipulation.launch.py
+launch/play_motion.launch.py
 test/test_copyright.py
 test/test_flake8.py
 test/test_pep257.py

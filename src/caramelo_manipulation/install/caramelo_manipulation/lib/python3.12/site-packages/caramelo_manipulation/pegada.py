@@ -1,20 +1,39 @@
-import math
-import time
-import numpy as np
-import cv2
-import pyrealsense2 as rs
 import json
+import math
 import os
+import random
 import sys
-import random 
+import time
 
-from pupil_apriltags import Detector
-from dynamixel_sdk import PortHandler
+import cv2
+import numpy as np
+import pyrealsense2 as rs
 from dynamixel_motor import DynamixelMotor
+from dynamixel_sdk import PortHandler
+from pupil_apriltags import Detector
+
+print("🔍 Python usado:", sys.executable)
+
 
 # === CONFIGURAÇÃO SERIAL ===
-DEVICENAME = '/dev/ttyUSB0'
-BAUDRATE = 1000000
+#DEVICENAME = '/dev/ttyUSB3'
+#BAUDRATE = 1000000
+# Porta serial pode ser configurada via variável de ambiente SERIAL_PORT
+DEVICENAME = os.environ.get('SERIAL_PORT', '/dev/ttyUSB3')
+BAUDRATE = int(os.environ.get('SERIAL_BAUD', '1000000'))
+
+# Permite override rápido pela linha de comando: primeiro argumento que comece com /dev/
+if len(sys.argv) > 1 and sys.argv[1].startswith('/dev/'):
+    DEVICENAME = sys.argv[1]
+
+
+def list_serial_ports():
+    try:
+        import serial.tools.list_ports as list_ports
+        return [p.device for p in list_ports.comports()]
+    except Exception:
+        return []
+
 
 # === OFFSETS (zero DH → motor) ===
 offsets = {
@@ -26,6 +45,7 @@ offsets = {
 }
 
 import os
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CAMINHO_JSON = os.path.join(BASE_DIR, "containers.json")
 CAMINHO_START_JSON = os.path.join(BASE_DIR, "start_filtrado.json")
@@ -89,12 +109,16 @@ POSICAO_INICIAL = {
 
 def aguardar_movimento(motor, posicao_alvo, tolerancia=20, timeout=5.0):
     inicio = time.time()
+    pos_atual = None
     while time.time() - inicio < timeout:
         pos_atual = motor.get_present_position()
         if abs(pos_atual - posicao_alvo) <= tolerancia:
             return True
         time.sleep(0.05)
-    print(f"⚠️ Timeout motor {motor.motor_id}. Última posição: {pos_atual}")
+    if pos_atual is None:
+        print(f"⚠️ Timeout motor {motor.motor_id}. Última posição: desconhecida")
+    else:
+        print(f"⚠️ Timeout motor {motor.motor_id}. Última posição: {pos_atual}")
     return False
 
 def controlar_garra(m6, m7, delta_ticks):
@@ -298,12 +322,26 @@ def main():
     if not tags_sequencia:
         print("⚠️ Sequência de tags vazia. Saindo.")
         return
-    port_handler = PortHandler(DEVICENAME)
-    if not port_handler.openPort():
-        print("❌ Erro ao abrir a porta serial.")
+    # Verifica se a porta existe antes de tentar abrir
+    if not os.path.exists(DEVICENAME):
+        print(f"❌ Porta serial {DEVICENAME} não encontrada. Portas disponíveis: {list_serial_ports()}")
         return
-    if not port_handler.setBaudRate(BAUDRATE):
-        print("❌ Erro ao configurar a baudrate.")
+
+    port_handler = PortHandler(DEVICENAME)
+    try:
+        if not port_handler.openPort():
+            print(f"❌ Erro ao abrir a porta serial {DEVICENAME}. Portas disponíveis: {list_serial_ports()}")
+            return
+        if not port_handler.setBaudRate(BAUDRATE):
+            print(f"❌ Erro ao configurar a baudrate {BAUDRATE} em {DEVICENAME}.")
+            port_handler.closePort()
+            return
+    except Exception as e:
+        print(f"❌ Exceção ao manipular a porta serial {DEVICENAME}: {e}")
+        try:
+            port_handler.closePort()
+        except Exception:
+            pass
         return
 
     motores = {i: DynamixelMotor(i, port_handler) for i in range(1, 8)}
@@ -313,8 +351,8 @@ def main():
 
     pipeline = rs.pipeline()
     config = rs.config()
-    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 15)
+    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 15)
     profile = pipeline.start(config)
     align = rs.align(rs.stream.color)
     detector = Detector(families="tag36h11", nthreads=4)
@@ -501,7 +539,10 @@ def main():
                 break
 
     finally:
-        port_handler.closePort()
+        try:
+            port_handler.closePort()
+        except Exception:
+            pass
         pipeline.stop()
         cv2.destroyAllWindows()
         print("✔️ Finalizado.")

@@ -1,8 +1,9 @@
 import json
-import time
-from dynamixel_sdk import PortHandler
-from dynamixel_motor import DynamixelMotor  # importe sua classe correta
 import os
+import time
+
+from dynamixel_motor import DynamixelMotor  # importe sua classe correta
+from dynamixel_sdk import PortHandler
 
 # === Configurações ===
 
@@ -88,12 +89,16 @@ def encontrar_container_por_id(container_data, id_objeto):
 
 def aguardar_movimento(motor, posicao_alvo, tolerancia=20, timeout=10.0):
     inicio = time.time()
+    pos_atual = None
     while time.time() - inicio < timeout:
         pos_atual = motor.get_present_position()
         if abs(pos_atual - posicao_alvo) <= tolerancia:
             return True
         time.sleep(0.05)
-    print(f"⚠️ Timeout motor {motor.motor_id}. Última posição: {pos_atual}")
+    if pos_atual is None:
+        print(f"⚠️ Timeout motor {motor.motor_id}. Última posição: desconhecida")
+    else:
+        print(f"⚠️ Timeout motor {motor.motor_id}. Última posição: {pos_atual}")
     return False
 
 def mover_motores(motores, movimentos):
@@ -138,13 +143,40 @@ def controlar_garra(m6, m7, delta_ticks):
 def main():
     print("📦 Iniciando sequência place.py...")
 
-    # Abrir porta serial e criar objetos motor
-    port_handler = PortHandler('/dev/ttyUSB0')
-    if not port_handler.openPort():
-        print("❌ Não foi possível abrir a porta COM3")
+    # Porta serial configurável
+    serial_port = os.environ.get('SERIAL_PORT', '/dev/ttyUSB3')
+    baud = int(os.environ.get('SERIAL_BAUD', '1000000'))
+
+    # Função auxiliar para listar portas
+    def list_serial_ports():
+        try:
+            import serial.tools.list_ports as list_ports
+            return [p.device for p in list_ports.comports()]
+        except Exception:
+            return []
+
+    if not os.path.exists(serial_port):
+        print(f"❌ Porta serial {serial_port} não encontrada. Portas disponíveis: {list_serial_ports()}")
         return
-    if not port_handler.setBaudRate(1000000):
-        print("❌ Não foi possível configurar baudrate")
+
+    port_handler = PortHandler(serial_port)
+    try:
+        if not port_handler.openPort():
+            print(f"❌ Não foi possível abrir a porta {serial_port}. Portas disponíveis: {list_serial_ports()}")
+            return
+        if not port_handler.setBaudRate(baud):
+            print(f"❌ Não foi possível configurar baudrate {baud} em {serial_port}")
+            try:
+                port_handler.closePort()
+            except Exception:
+                pass
+            return
+    except Exception as e:
+        print(f"❌ Exceção ao abrir/Configurar porta {serial_port}: {e}")
+        try:
+            port_handler.closePort()
+        except Exception:
+            pass
         return
 
     motores = {}
@@ -205,7 +237,10 @@ def main():
     salvar_json(CAMINHO_CONTAINER, container_data)
 
     # Desabilitar torque e fechar porta
-    port_handler.closePort()
+    try:
+        port_handler.closePort()
+    except Exception:
+        pass
 
     print("✅ Sequência place finalizada.")
 
